@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Eval WBGT</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; background-color: #f2f2f7; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-top: 15px; color: #1c1c1e; font-size: 14px; }
+        input { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
+        button { width: 100%; padding: 16px; margin-top: 25px; background-color: #007aff; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        #result-card { display: none; text-align: center; color: white; transition: background-color 0.4s ease; }
+        .value { font-size: 42px; font-weight: bold; margin: 10px 0; }
+        .risk { font-size: 16px; font-weight: 500; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2 style="margin-top: 0; color: #000;">Ingesta de Datos</h2>
+        <label>Temperatura del Aire (Ta) [°C]</label>
+        <input type="number" id="ta" inputmode="decimal" pattern="[0-9]*" autofocus>
+        <label>Humedad Relativa (RH) [%]</label>
+        <input type="number" id="rh" inputmode="decimal" pattern="[0-9]*">
+        <label>Velocidad del Viento (v) [m/s]</label>
+        <input type="number" id="v" inputmode="decimal" pattern="[0-9]*">
+        <label>Radiación Solar (SR) [W/m²]</label>
+        <input type="number" id="sr" inputmode="decimal" pattern="[0-9]*">
+        <button id="calc-btn" onclick="calculateWBGT()">Estimar WBGT</button>
+    </div>
+    <div id="result-card" class="card">
+        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Índice Calculado</div>
+        <div id="wbgt-value" class="value">-- °C</div>
+        <div id="risk-text" class="risk">--</div>
+    </div>
+    <script>
+        window.onload = function() {
+            const inputs = ['ta', 'rh', 'v', 'sr'];
+            inputs.forEach(id => document.getElementById(id).value = '');
+            document.getElementById('result-card').style.display = 'none';
+            setTimeout(() => document.getElementById('ta').focus(), 100);
+            inputs.forEach((id, index) => {
+                document.getElementById(id).addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (index < inputs.length - 1) {
+                            document.getElementById(inputs[index + 1]).focus();
+                        } else {
+                            document.getElementById(id).blur(); 
+                            calculateWBGT();
+                        }
+                    }
+                });
+            });
+        };
+
+        async function calculateWBGT() {
+            const data = {
+                ta: parseFloat(document.getElementById('ta').value),
+                rh: parseFloat(document.getElementById('rh').value),
+                v: parseFloat(document.getElementById('v').value),
+                sr: parseFloat(document.getElementById('sr').value)
+            };
+
+            if (Object.values(data).some(isNaN)) return;
+
+            try {
+                // Al estar todo unificado, ya no hace falta IP ni puerto aquí.
+                const response = await fetch(`/api/wbgt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                const resultCard = document.getElementById('result-card');
+                
+                resultCard.style.display = 'block';
+                document.getElementById('wbgt-value').innerText = result.wbgt + " °C";
+                document.getElementById('risk-text').innerText = result.risk;
+
+                if (result.wbgt >= 31.0) {
+                    resultCard.style.backgroundColor = '#ff3b30'; 
+                    resultCard.style.color = '#fff';
+                } else if (result.wbgt >= 28.0) {
+                    resultCard.style.backgroundColor = '#ffcc00'; 
+                    resultCard.style.color = '#000';
+                } else {
+                    resultCard.style.backgroundColor = '#34c759'; 
+                    resultCard.style.color = '#fff';
+                }
+            } catch (error) {
+                alert("Error de red: El servidor Python no responde.");
+            }
+        }
+    </script>
+</body>
+</html>
