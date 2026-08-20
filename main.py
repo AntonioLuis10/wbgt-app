@@ -52,8 +52,7 @@ def calculate_wbgt(data: WeatherData):
 async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
         # URL corregida para minutely_15 (pidiendo 1 día para no saturar)
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=1&timezone=auto"
-        weather_resp = await client.get(weather_url)
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"        weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
         # Si la API devuelve un error (ej. falta una variable), lanzamos el 404
