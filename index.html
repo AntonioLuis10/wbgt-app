@@ -16,11 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="google-site-verification" content="qwkRJMtrRn9pGCcDd2gH4DA351yoCsNs7wRooNl1KSc" />
     <title>Eval WBGT</title>
-    <meta name="description" content="Calculadora online del índice WBGT para estimación de estrés térmico. Ideal para prevención de riesgos laborales y competiciones deportivas.">
-    <meta name="keywords" content="calculadora WBGT, estrés térmico, ISO 7243, temperatura de globo, salud ocupacional, triatlón, calor">
-    <meta name="author" content="Antonio Luis Díaz Díaz">
     
-    <!-- Librería de gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -32,17 +28,25 @@
         #result-card { display: none; text-align: center; color: white; transition: background-color 0.4s ease; }
         .value { font-size: 42px; font-weight: bold; margin: 10px 0; }
         .risk { font-size: 16px; font-weight: 500; opacity: 0.9; }
+        /* Estilos del desplegable */
+        .suggestion-item { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; color: #333; }
+        .suggestion-item:hover { background-color: #f8f8fa; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2 style="margin-top: 0; color: #000;">Ingesta de Datos</h2>
         
+        <!-- BARRA DE BÚSQUEDA CON AUTOCOMPLETAR -->
         <div style="background: #f0f0f5; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
             <label style="margin-top:0;">Buscar por Localidad</label>
-            <div style="display: flex; gap: 10px; margin-top: 8px;">
-                <input type="text" id="city-search" placeholder="Ej. Pulpí" style="margin-top:0; flex-grow: 1;">
-                <button id="search-btn" onclick="fetchWeather()" style="margin-top:0; width: auto; padding: 12px 20px; background-color: #34c759;">Buscar</button>
+            <div style="position: relative; margin-top: 8px;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="city-search" placeholder="Escribe para buscar..." oninput="getSuggestions()" autocomplete="off" style="margin-top:0; flex-grow: 1;">
+                    <button id="search-btn" onclick="fetchWeather()" style="margin-top:0; width: auto; padding: 12px 20px; background-color: #34c759;">Buscar</button>
+                </div>
+                <!-- Caja flotante de resultados -->
+                <div id="suggestions-box" style="display: none; position: absolute; top: 100%; left: 0; right: 80px; background: white; border: 1px solid #d1d1d6; border-radius: 8px; margin-top: 5px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
             </div>
             <div id="city-loading" style="display:none; font-size:12px; margin-top:8px; font-weight:600;"></div>
         </div>
@@ -64,84 +68,168 @@
         <div id="risk-text" class="risk">--</div>
     </div>
 
-    <!-- TARJETA DEL GRÁFICO CON CAJA DE COMENTARIOS -->
     <div id="chart-card" class="card" style="display: none; margin-top: 20px;">
         <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 16px;">Previsión WBGT (Próximas 24h)</h3>
         <p style="text-align: center; font-size: 12px; color: #666; margin-top: -5px;">Toca un punto de la curva para ver el protocolo de hidratación</p>
         <canvas id="wbgtChart"></canvas>
-        
-        <div id="chart-comment" style="display: none; margin-top: 15px; padding: 12px; background: #f8f8fa; border-radius: 8px; font-size: 14px; color: #333; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-        </div>
+        <div id="chart-comment" style="display: none; margin-top: 15px; padding: 12px; background: #f8f8fa; border-radius: 8px; font-size: 14px; color: #333; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"></div>
     </div>
-<!-- GLOSARIO FISIOLÓGICO -->
+
+    <!-- GLOSARIO FISIOLÓGICO -->
     <div class="card" style="margin-top: 20px;">
         <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glosario de Protocolos Fisiológicos</h3>
-        
         <div style="margin-top: 15px;">
             <h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">1. Eu-hidratación (El Punto de Equilibrio)</h4>
             <p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Es el estado de hidratación normal y saludable del cuerpo.</p>
             <ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;">
-                <li><strong>Qué significa en la práctica:</strong> Comenzar a entrenar en un estado de equilibrio óptimo: ni deshidratado (hipohidratado) ni sobrehidratado.</li>
-                <li><strong>Cómo se logra:</strong> Con una ingesta de agua estándar y regular en las horas previas. En condiciones de Riesgo Bajo (Bandera Verde), permite aguantar hasta 90 minutos sin beber, ya que el cuerpo compensa la pérdida de sudor de forma segura.</li>
+                <li><strong>Qué significa en la práctica:</strong> Comenzar a entrenar en un estado de equilibrio óptimo: ni deshidratado ni sobrehidratado.</li>
+                <li><strong>Cómo se logra:</strong> Con una ingesta de agua estándar y regular en las horas previas. En condiciones de Riesgo Bajo, permite aguantar hasta 90 minutos sin beber.</li>
             </ul>
         </div>
-
         <div style="margin-top: 15px;">
             <h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">2. Hiperhidratación (La Reserva Interna)</h4>
-            <p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Proceso de expandir artificialmente el volumen de agua corporal antes de salir a correr, creando un "tanque de reserva" interno para sudar ese líquido en lugar del plasma de tus venas, sin cargar peso externo.</p>
+            <p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Proceso de expandir artificialmente el volumen de agua corporal antes de salir a correr, creando un "tanque de reserva" interno.</p>
             <ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;">
-                <li><strong>Por qué no basta con beber agua sola:</strong> Los riñones detectan el exceso y lo eliminan rápido (diuresis). Se necesitan "anclas" osmóticas.</li>
-                <li><strong>Protocolo de Sodio:</strong> Ingerir 10-12g de sal (NaCl) en agua (10-15 mL/kg) 60-90 min antes. El sodio retiene agua en los vasos sanguíneos, aportando un extra de 400-600 mL de plasma.</li>
+                <li><strong>Protocolo de Sodio:</strong> Ingerir 10-12g de sal (NaCl) en agua (10-15 mL/kg) 60-90 min antes. Retiene agua en los vasos sanguíneos, aportando un extra de 400-600 mL de plasma.</li>
                 <li><strong>Protocolo de Glicerol:</strong> Tomar 1,2g de glicerol por kg de peso con abundante agua (25-30 mL/kg) en las 2 horas previas. Retiene agua en las células y frena la deriva cardíaca.</li>
             </ul>
         </div>
-
         <div style="margin-top: 15px;">
             <h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">3. Pre-cooling Agresivo (El Escudo Térmico)</h4>
-            <p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Técnicas físicas y metabólicas para bajar la temperatura corporal central (rectal) y cutánea antes de empezar a correr, aumentando el margen para almacenar calor antes de la hipertermia (> 40 °C).</p>
+            <p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Técnicas físicas y metabólicas para bajar la temperatura corporal central (rectal) y cutánea antes de empezar a correr.</p>
             <ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;">
-                <li><strong>Granizado de Hielo (Ice Slurry):</strong> Ingerir 7,5g de hielo picado por kg de peso 30 min antes. Al derretirse en el estómago, absorbe energía (calor latente de fusión) y desploma la temperatura interna entre 0,3 °C y 0,6 °C.</li>
-                <li><strong>Enfriamiento Externo Combinado:</strong> Aplicar chalecos de hielo o compresas frías en cuello e ingles (arterias carótidas y femorales) durante 20-30 min, retrasando la necesidad de bombear sangre a la piel.</li>
+                <li><strong>Granizado de Hielo (Ice Slurry):</strong> Ingerir 7,5g de hielo picado por kg de peso 30 min antes. Desploma la temperatura interna entre 0,3 °C y 0,6 °C.</li>
+                <li><strong>Enfriamiento Externo:</strong> Aplicar chalecos de hielo o compresas frías en cuello e ingles durante 20-30 min, retrasando la necesidad de bombear sangre a la piel.</li>
             </ul>
         </div>
     </div>
-    <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
-        <p>Esta herramienta computacional estima el índice WBGT (Wet Bulb Globe Temperature) utilizando el modelo termodinámico de Liljegren para ambientes exteriores. Permite evaluar el riesgo por estrés térmico según la normativa ISO 7243 basándose en la temperatura del aire, humedad relativa, velocidad del viento y radiación solar.</p>
-    </div>
 
     <script>
-        // 1. DICCIONARIO FISIOLÓGICO Y DE COLORES
         function getRiskData(wbgt) {
-            if (wbgt > 28.9) {
-                return { color: '#000000', font: '#fff', title: 'Bandera Negra', text: '<strong>Prohibición Absoluta.</strong> Sin viabilidad biomecánica o termorreguladora. Colapso cardiovascular inminente e imposibilidad física de disipar calor.' };
-            } else if (wbgt >= 27.3) {
-                return { color: '#ff3b30', font: '#fff', title: 'Bandera Roja / Extrema', text: '<strong>Límite Extremo:</strong> Máximo 30 - 40 min sin agua. Exige pre-cooling agresivo (granizado de hielo). Riesgo alto de golpe de calor por esfuerzo (Tre > 40°C).' };
-            } else if (wbgt >= 25.1) {
-                return { color: '#ff9500', font: '#fff', title: 'Bandera Naranja', text: '<strong>Alto Riesgo:</strong> Peso Cero limitado a 45 - 60 min utilizando hiperhidratación previa (sodio/glicerol). Caída notable del ritmo de carrera.' };
-            } else if (wbgt >= 22.2) {
-                return { color: '#ffcc00', font: '#000', title: 'Bandera Amarilla', text: '<strong>Riesgo Moderado:</strong> Peso Cero hasta 60 - 75 min asumiendo deshidratación del 2 - 3%. Ligera elevación del esfuerzo percibido (RPE) y deriva cardíaca.' };
-            } else {
-                return { color: '#34c759', font: '#fff', title: 'Bandera Verde', text: '<strong>Riesgo Bajo:</strong> Peso Cero hasta 90 min. Requiere eu-hidratación previa estándar. Deriva cardíaca insignificante y pérdida hídrica menor al 2%.' };
+            if (wbgt > 28.9) return { color: '#000000', font: '#fff', title: 'Bandera Negra', text: '<strong>Prohibición Absoluta.</strong> Sin viabilidad biomecánica o termorreguladora.' };
+            if (wbgt >= 27.3) return { color: '#ff3b30', font: '#fff', title: 'Bandera Roja / Extrema', text: '<strong>Límite Extremo:</strong> Máximo 30 - 40 min sin agua. Exige pre-cooling agresivo (granizado de hielo).' };
+            if (wbgt >= 25.1) return { color: '#ff9500', font: '#fff', title: 'Bandera Naranja', text: '<strong>Alto Riesgo:</strong> Peso Cero limitado a 45 - 60 min utilizando hiperhidratación previa (sodio/glicerol).' };
+            if (wbgt >= 22.2) return { color: '#ffcc00', font: '#000', title: 'Bandera Amarilla', text: '<strong>Riesgo Moderado:</strong> Peso Cero hasta 60 - 75 min asumiendo deshidratación del 2 - 3%.' };
+            return { color: '#34c759', font: '#fff', title: 'Bandera Verde', text: '<strong>Riesgo Bajo:</strong> Peso Cero hasta 90 min. Requiere eu-hidratación previa estándar.' };
+        }
+
+        // VARIABLES PARA EL AUTOCOMPLETAR
+        let selectedLat = null;
+        let selectedLon = null;
+        let selectedLocation = "";
+        let searchTimeout = null;
+
+        // FUNCIÓN QUE BUSCA MIENTRAS ESCRIBES
+        async function getSuggestions() {
+            const query = document.getElementById('city-search').value;
+            const box = document.getElementById('suggestions-box');
+            selectedLat = null; 
+            
+            if (query.length < 3) { box.style.display = 'none'; return; }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=es&format=json`);
+                    const data = await res.json();
+                    
+                    box.innerHTML = '';
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(city => {
+                            let parts = [city.name];
+                            if (city.admin3 && !parts.includes(city.admin3)) parts.push(city.admin3);
+                            if (city.admin2 && !parts.includes(city.admin2)) parts.push(city.admin2);
+                            if (city.admin1 && !parts.includes(city.admin1)) parts.push(city.admin1);
+                            if (city.country && !parts.includes(city.country)) parts.push(city.country);
+                            
+                            const fullName = parts.join(', ');
+                            
+                            let div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerText = fullName;
+                            
+                            // Cuando el usuario toca una opción de la lista
+                            div.onclick = function() {
+                                document.getElementById('city-search').value = fullName;
+                                selectedLat = city.latitude;
+                                selectedLon = city.longitude;
+                                selectedLocation = fullName;
+                                box.style.display = 'none';
+                                fetchWeather(); // Dispara la búsqueda automáticamente
+                            };
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } else {
+                        box.style.display = 'none';
+                    }
+                } catch (e) {}
+            }, 300); // Espera 300ms después de que dejes de teclear
+        }
+
+        // Ocultar la lista si tocas fuera
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'city-search') {
+                document.getElementById('suggestions-box').style.display = 'none';
+            }
+        });
+
+        // DESCARGA METEOROLÓGICA (AHORA RECIBE COORDENADAS)
+        async function fetchWeather() {
+            const query = document.getElementById('city-search').value;
+            if (!query) return;
+            
+            const loading = document.getElementById('city-loading');
+            loading.style.display = 'block';
+            loading.style.color = '#007aff';
+            loading.innerText = 'Descargando datos atmosféricos...';
+            
+            try {
+                let lat = selectedLat;
+                let lon = selectedLon;
+                let locName = selectedLocation;
+
+                // Si le da a "Buscar" sin elegir de la lista, forzamos a pillar el primero
+                if (lat === null) {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=es&format=json`);
+                    const geoData = await res.json();
+                    if (!geoData.results) throw new Error("No encontrada");
+                    
+                    const city = geoData.results[0];
+                    lat = city.latitude; lon = city.longitude;
+                    
+                    let parts = [city.name];
+                    if (city.admin3 && !parts.includes(city.admin3)) parts.push(city.admin3);
+                    if (city.admin2 && !parts.includes(city.admin2)) parts.push(city.admin2);
+                    if (city.admin1 && !parts.includes(city.admin1)) parts.push(city.admin1);
+                    if (city.country && !parts.includes(city.country)) parts.push(city.country);
+                    locName = parts.join(', ');
+                    document.getElementById('city-search').value = locName;
+                }
+
+                document.getElementById('suggestions-box').style.display = 'none';
+                
+                // Llamamos a nuestro backend en Python pasándole las coordenadas exactas
+                const response = await fetch(`/api/weather?lat=${lat}&lon=${lon}&loc=${encodeURIComponent(locName)}`);
+                if (!response.ok) throw new Error("Error en servidor");
+                const data = await response.json();
+                
+                document.getElementById('ta').value = data.current.ta;
+                document.getElementById('rh').value = data.current.rh;
+                document.getElementById('v').value = data.current.v;
+                document.getElementById('sr').value = data.current.sr;
+                
+                calculateWBGT();
+                await renderChart(data.hourly);
+                
+                loading.style.color = '#34c759';
+                loading.innerText = '¡Datos para ' + data.location + ' actualizados!';
+            } catch (error) {
+                loading.style.color = '#ff3b30';
+                loading.innerText = 'Ciudad no encontrada. Escribe de nuevo y selecciona una opción de la lista.';
             }
         }
 
-        window.onload = function() {
-            const inputs = ['ta', 'rh', 'v', 'sr'];
-            inputs.forEach(id => document.getElementById(id).value = '');
-            document.getElementById('result-card').style.display = 'none';
-            
-            inputs.forEach((id, index) => {
-                document.getElementById(id).addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (index < inputs.length - 1) document.getElementById(inputs[index + 1]).focus();
-                        else { document.getElementById(id).blur(); calculateWBGT(); }
-                    }
-                });
-            });
-        };
-
-        // 2. CÁLCULO ACTUAL
         async function calculateWBGT() {
             const data = {
                 ta: parseFloat(document.getElementById('ta').value),
@@ -167,45 +255,10 @@
                 const riskInfo = getRiskData(result.wbgt);
                 resultCard.style.backgroundColor = riskInfo.color;
                 resultCard.style.color = riskInfo.font;
-            } catch (error) {
-                alert("Error de red: El servidor Python no responde.");
-            }
+            } catch (error) {}
         }
 
         let wbgtChartInstance = null;
-
-        // 3. DESCARGA METEOROLÓGICA
-        async function fetchWeather() {
-            const city = document.getElementById('city-search').value;
-            if (!city) return;
-            
-            const loading = document.getElementById('city-loading');
-            loading.style.display = 'block';
-            loading.style.color = '#007aff';
-            loading.innerText = 'Buscando variables atmosféricas y radiación solar...';
-            
-            try {
-                const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-                if (!response.ok) throw new Error("Ciudad no encontrada");
-                const data = await response.json();
-                
-                document.getElementById('ta').value = data.current.ta;
-                document.getElementById('rh').value = data.current.rh;
-                document.getElementById('v').value = data.current.v;
-                document.getElementById('sr').value = data.current.sr;
-                
-                calculateWBGT();
-                await renderChart(data.hourly);
-                
-                loading.style.color = '#34c759';
-                loading.innerText = '¡Datos para ' + data.location + ' actualizados!';
-            } catch (error) {
-                loading.style.color = '#ff3b30';
-                loading.innerText = 'Error al localizar la ciudad.';
-            }
-        }
-
-        // 4. GRÁFICO INTERACTIVO 24H
         async function renderChart(hourlyData) {
             document.getElementById('chart-card').style.display = 'block';
             document.getElementById('chart-comment').style.display = 'none';
@@ -245,9 +298,7 @@
                         borderWidth: 3,
                         fill: true,
                         tension: 0.4,
-                        segment: {
-                            borderColor: ctx => getRiskData(ctx.p1.parsed.y).color
-                        },
+                        segment: { borderColor: ctx => getRiskData(ctx.p1.parsed.y).color },
                         pointBackgroundColor: context => getRiskData(context.dataset.data[context.dataIndex]).color,
                         pointRadius: 5,
                         pointHoverRadius: 8
