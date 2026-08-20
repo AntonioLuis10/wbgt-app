@@ -28,9 +28,9 @@ def calculate_wbgt(data: WeatherData):
 
     tnw = tw + (data.sr * 0.01) - (data.v * 0.1)
     tg = data.ta + (data.sr * 0.015) / (max(data.v, 0.1) ** 0.6)
-    
+
     wbgt = 0.7 * tnw + 0.2 * tg + 0.1 * data.ta
-    
+
     if wbgt > 28.9:
         risk_level = "Bandera Negra (Peligro Extremo)"
     elif wbgt >= 27.3:
@@ -47,30 +47,42 @@ def calculate_wbgt(data: WeatherData):
         "risk": risk_level
     }
 
+# ESTA ES LA RUTA NUEVA QUE RECIBE LAS COORDENADAS DESDE TU LISTA DESPLEGABLE
 @app.get("/api/weather")
 async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
-        # CORRECCIÓN: Quitamos el bloque 'current' porque Open-Meteo no acepta Radiación Solar ahí.
-        # Pedimos solo 'minutely_15' para extraer luego la hora actual.
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
-        
+        # URL corregida para minutely_15 (pidiendo 1 día para no saturar)
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"        weather_resp = await client.get(weather_url)
+        # Petición a la base de datos: minutely_15 y forecast_days=2 para tener margen horario
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
-        
-        # Si Open-Meteo nos da error de sintaxis, lo atrapamos para verlo claro
+
+        # Si la API devuelve un error (ej. falta una variable), lanzamos el 404
         if "error" in weather_data:
-            reason = weather_data.get("reason", "Error desconocido de Open-Meteo")
-            raise HTTPException(status_code=400, detail=reason)
+             raise HTTPException(status_code=404, detail="Error en Open-Meteo")
+
+            raise HTTPException(status_code=404, detail="Ciudad no encontrada")
         
         return {
             "location": loc, 
+            "current": {
+@@ -67,12 +66,16 @@
+                "v": weather_data["current"]["wind_speed_10m"],
+                "sr": weather_data["current"]["shortwave_radiation"]
+            },
+            # Enviamos la matriz minutely_15
+            "minutely_15": weather_data["minutely_15"]
             "minutely_15": weather_data.get("minutely_15", {})
         }
 
+# PYTHON ENTREGA LA WEB DIRECTAMENTE
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
         content = f.read()
+    # ESTO DESTRUYE EL CACHÉ DEL NAVEGADOR Y TE MUESTRA SIEMPRE LA VERSIÓN NUEVA
     return HTMLResponse(content=content, headers={
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
