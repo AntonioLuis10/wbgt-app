@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Calculadora WBGT</title>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -40,7 +40,7 @@
         </select>
 
         <h2 style="margin-top: 0; color: #000; text-align: center; font-size: 22px; padding-top: 10px;" data-i18n="app_title">Calculadora WBGT</h2>
-
+        
         <div style="background: #f0f0f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; margin-top: 20px;">
             <label style="margin-top:0;" data-i18n="search_label">Buscar por Localidad</label>
             <div style="position: relative; margin-top: 8px;">
@@ -63,7 +63,7 @@
         <input type="number" id="sr" inputmode="decimal" pattern="[0-9]*">
         <button id="calc-btn" onclick="calculateWBGT()" data-i18n="btn_calc">Estimar WBGT</button>
     </div>
-
+    
     <div id="result-card" class="card">
         <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;" data-i18n="idx_calc">Índice Calculado</div>
         <div id="wbgt-value" class="value">-- °C</div>
@@ -87,7 +87,6 @@
         const i18n = {
             es: {
                 app_title: "Calculadora WBGT", search_label: "Buscar por Localidad", search_placeholder: "Escribe para buscar...", btn_search: "Buscar", lbl_ta: "Temperatura del Aire (Ta) [°C]", lbl_rh: "Humedad Relativa (RH) [%]", lbl_v: "Velocidad del Viento (v) [m/s]", lbl_sr: "Radiación Solar (SR) [W/m²]", btn_calc: "Estimar WBGT", idx_calc: "Índice Calculado", chart_title: "Previsión WBGT (Próximas 24h)", chart_desc: "Toca un punto de la curva para ver el protocolo de hidratación", footer_text: "Esta herramienta computacional estima el índice WBGT (Wet Bulb Globe Temperature) utilizando el modelo termodinámico de Liljegren para ambientes exteriores. Permite evaluar el riesgo por estrés térmico según la normativa ISO 7243.", msg_loading: "Descargando datos atmosféricos...", msg_success: "¡Datos actualizados para ", msg_error: "Ciudad no encontrada. Escribe de nuevo.", flag_black: "Bandera Negra", flag_black_txt: "<strong>Prohibición Absoluta.</strong> Sin viabilidad biomecánica o termorreguladora.", flag_red: "Bandera Roja / Extrema", flag_red_txt: "<strong>Límite Extremo:</strong> Máximo 30-40 min sin agua. Exige pre-cooling agresivo (granizado de hielo).", flag_orange: "Bandera Naranja", flag_orange_txt: "<strong>Alto Riesgo:</strong> Peso Cero limitado a 45-60 min utilizando hiperhidratación previa (sodio/glicerol).", flag_yellow: "Bandera Amarilla", flag_yellow_txt: "<strong>Riesgo Moderado:</strong> Peso Cero hasta 60-75 min asumiendo deshidratación del 2-3%.", flag_green: "Bandera Verde", flag_green_txt: "<strong>Riesgo Bajo:</strong> Peso Cero hasta 90 min. Requiere eu-hidratación previa estándar.",
-                glossary_html: `<h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glosario de Protocolos Fisiológicos</h3><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">1. Eu-hidratación (El Punto de Equilibrio)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Estado de hidratación normal y saludable del cuerpo.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>Práctica:</strong> Comenzar en equilibrio óptimo: ni hipohidratado ni sobrehidratado.</li><li><strong>Aplicación:</strong> Con ingesta previa estándar. En Riesgo Bajo, permite hasta 90 min sin beber, compensando la pérdida de sudor de forma segura.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">2. Hiperhidratación (La Reserva Interna)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Expansión artificial del volumen de agua corporal para sudar ese líquido sin cargar peso externo.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>El problema del agua sola:</strong> El exceso genera rápida diuresis. Se exigen "anclas" osmóticas.</li><li><strong>Protocolo de Sodio:</strong> 10-12g de NaCl en agua (10-15 mL/kg) 60-90 min antes. Aporta 400-600 mL de plasma extra.</li><li><strong>Protocolo de Glicerol:</strong> 1,2g/kg de glicerol en agua (25-30 mL/kg) 2h antes. Retiene agua celular y frena la deriva cardíaca.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">3. Pre-cooling Agresivo (El Escudo Térmico)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Técnicas para reducir la temperatura central (rectal) y cutánea, retrasando el límite de hipertermia (> 40 °C).</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>Ice Slurry:</strong> 7,5g/kg de hielo picado 30 min antes. Al derretirse absorbe calor latente de fusión, bajando la temperatura interna 0,3-0,6 °C.</li><li><strong>Enfriamiento Externo:</strong> Compresas o chalecos de hielo en cuello e ingles (20-30 min) para enfriar la sangre de las arterias carótidas y femorales.</li></ul></div>`
                 glossary_html: `
                     <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glosario de Protocolos Fisiológicos</h3>
                     
@@ -121,7 +120,6 @@
             },
             en: {
                 app_title: "WBGT Calculator", search_label: "Search by Location", search_placeholder: "Type to search...", btn_search: "Search", lbl_ta: "Air Temperature (Ta) [°C]", lbl_rh: "Relative Humidity (RH) [%]", lbl_v: "Wind Speed (v) [m/s]", lbl_sr: "Solar Radiation (SR) [W/m²]", btn_calc: "Estimate WBGT", idx_calc: "Calculated Index", chart_title: "WBGT Forecast (Next 24h)", chart_desc: "Tap a point on the curve to see the hydration protocol", footer_text: "This computational tool estimates the WBGT (Wet Bulb Globe Temperature) index using Liljegren's thermodynamic model for outdoor environments. It evaluates heat stress risk according to ISO 7243.", msg_loading: "Downloading atmospheric data...", msg_success: "Data updated for ", msg_error: "City not found. Please try again.", flag_black: "Black Flag", flag_black_txt: "<strong>Absolute Prohibition.</strong> No biomechanical or thermoregulatory viability.", flag_red: "Red Flag / Extreme", flag_red_txt: "<strong>Extreme Limit:</strong> Max 30-40 min without water. Requires aggressive pre-cooling (ice slurry).", flag_orange: "Orange Flag", flag_orange_txt: "<strong>High Risk:</strong> Zero Weight limited to 45-60 min using prior hyperhydration (sodium/glycerol).", flag_yellow: "Yellow Flag", flag_yellow_txt: "<strong>Moderate Risk:</strong> Zero Weight up to 60-75 min assuming 2-3% dehydration.", flag_green: "Green Flag", flag_green_txt: "<strong>Low Risk:</strong> Zero Weight up to 90 min. Requires standard euhydration.",
-                glossary_html: `<h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glossary of Physiological Protocols</h3><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">1. Euhydration (The Balance Point)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">The normal and healthy hydration state of the body.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>In practice:</strong> Starting in optimal balance: neither hypohydrated nor overhydrated.</li><li><strong>Application:</strong> Standard prior intake. In Low Risk conditions, allows up to 90 min of exercise by safely compensating for sweat loss.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">2. Hyperhydration (The Internal Reserve)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Artificial expansion of body water volume to provide sweat fluid without carrying external weight.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>The issue with plain water:</strong> Excess triggers rapid diuresis. Osmotic "anchors" are required.</li><li><strong>Sodium Protocol:</strong> 10-12g of NaCl in water (10-15 mL/kg) 60-90 min prior. Provides 400-600 mL of extra plasma.</li><li><strong>Glycerol Protocol:</strong> 1.2g/kg of glycerol in water (25-30 mL/kg) 2h prior. Retains cellular water and blunts cardiovascular drift.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">3. Aggressive Pre-cooling (The Thermal Shield)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Techniques to lower core (rectal) and skin temperatures, delaying the hyperthermia threshold (> 40 °C).</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>Ice Slurry:</strong> 7.5g/kg of crushed ice 30 min prior. Melting absorbs latent heat of fusion, dropping core temp by 0.3-0.6 °C.</li><li><strong>External Cooling:</strong> Ice packs or vests on the neck and groin (20-30 min) to cool blood in carotid and femoral arteries.</li></ul></div>`
                 glossary_html: `
                     <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glossary of Physiological Protocols</h3>
                     
@@ -155,7 +153,6 @@
             },
             fr: {
                 app_title: "Calculateur WBGT", search_label: "Rechercher par Emplacement", search_placeholder: "Tapez pour rechercher...", btn_search: "Rechercher", lbl_ta: "Température de l'Air (Ta) [°C]", lbl_rh: "Humidité Relative (RH) [%]", lbl_v: "Vitesse du Vent (v) [m/s]", lbl_sr: "Rayonnement Solaire (SR) [W/m²]", btn_calc: "Estimer le WBGT", idx_calc: "Indice Calculé", chart_title: "Prévisions WBGT (Prochaines 24h)", chart_desc: "Touchez un point de la courbe pour voir le protocole", footer_text: "Cet outil informatique estime l'indice WBGT en utilisant le modèle thermodynamique de Liljegren pour les environnements extérieurs.", msg_loading: "Téléchargement des données...", msg_success: "Données mises à jour pour ", msg_error: "Ville non trouvée. Veuillez réessayer.", flag_black: "Drapeau Noir", flag_black_txt: "<strong>Interdiction Absolue.</strong> Aucune viabilité biomécanique ou thermorégulatrice.", flag_red: "Drapeau Rouge / Extrême", flag_red_txt: "<strong>Limite Extrême:</strong> Max 30-40 min sans eau. Nécessite un pré-refroidissement agressif (glace pilée).", flag_orange: "Drapeau Orange", flag_orange_txt: "<strong>Risque Élevé:</strong> Poids Zéro limité à 45-60 min avec hyperhydratation préalable (sodium/glycérol).", flag_yellow: "Drapeau Jaune", flag_yellow_txt: "<strong>Risque Modéré:</strong> Poids Zéro jusqu'à 60-75 min en assumant 2-3% de déshydratation.", flag_green: "Drapeau Vert", flag_green_txt: "<strong>Risque Faible:</strong> Poids Zéro jusqu'à 90 min. Nécessite une eu-hydratation préalable standard.",
-                glossary_html: `<h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glossaire des Protocoles Physiologiques</h3><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">1. Eu-hydratation (Le Point d'Équilibre)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">L'état d'hydratation normal et sain du corps.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>En pratique :</strong> Commencer en équilibre optimal : ni hypohydraté ni surhydraté.</li><li><strong>Application :</strong> Apport préalable standard. En Risque Faible, permet jusqu'à 90 min d'effort.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">2. Hyperhydratation (La Réserve Interne)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Expansion artificielle du volume d'eau pour fournir du liquide de sudation.</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>Le problème :</strong> L'excès déclenche une diurèse rapide.</li><li><strong>Protocole Sodium :</strong> 10-12g de NaCl (10-15 mL/kg) 60-90 min avant. Fournit 400-600 mL de plasma en plus.</li><li><strong>Protocole Glycérol :</strong> 1,2g/kg de glycérol (25-30 mL/kg) 2h avant. Retient l'eau cellulaire.</li></ul></div><div style="margin-top: 15px;"><h4 style="margin: 0 0 5px 0; color: #007aff; font-size: 15px;">3. Pré-refroidissement Agressif (Le Bouclier Thermique)</h4><p style="font-size: 13px; color: #333; line-height: 1.5; margin-top: 0;">Techniques pour abaisser les températures centrale et cutanée (> 40 °C).</p><ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px; margin-top: 5px;"><li><strong>Glace Pilée (Ice Slurry) :</strong> 7,5g/kg de glace 30 min avant. La fonte absorbe la chaleur latente de fusion.</li><li><strong>Refroidissement Externe :</strong> Vestes de glace sur le cou et l'aine (20-30 min).</li></ul></div>`
                 glossary_html: `
                     <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glossaire des Protocoles Physiologiques</h3>
                     
@@ -189,29 +186,167 @@
             }
         };
 
-@@ -210,7 +297,6 @@
+        let currentLang = 'es';
 
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const t = i18n[lang];
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerHTML = t[key];
+            });
+
+            document.getElementById('city-search').placeholder = t.search_placeholder;
+            document.getElementById('glossary-card').innerHTML = t.glossary_html;
+
+            if (document.getElementById('result-card').style.display === 'block') {
+                calculateWBGT(); 
+            }
+        }
+
+        window.onload = function() { changeLanguage('es'); };
+
+        function getRiskData(wbgt) {
+            const t = i18n[currentLang];
+            if (wbgt > 28.9) return { color: '#000000', font: '#fff', title: t.flag_black, text: t.flag_black_txt };
+            if (wbgt >= 27.3) return { color: '#ff3b30', font: '#fff', title: t.flag_red, text: t.flag_red_txt };
+            if (wbgt >= 25.1) return { color: '#ff9500', font: '#fff', title: t.flag_orange, text: t.flag_orange_txt };
+            if (wbgt >= 22.2) return { color: '#ffcc00', font: '#000', title: t.flag_yellow, text: t.flag_yellow_txt };
+            return { color: '#34c759', font: '#fff', title: t.flag_green, text: t.flag_green_txt };
+        }
+
+        let selectedLat = null, selectedLon = null, selectedLocation = "", searchTimeout = null;
+
+        async function getSuggestions() {
+            const query = document.getElementById('city-search').value;
+            const box = document.getElementById('suggestions-box');
+            selectedLat = null; 
+            
+            if (query.length < 3) { box.style.display = 'none'; return; }
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=${currentLang}&format=json`);
+                    const data = await res.json();
+                    box.innerHTML = '';
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(city => {
+                            let parts = [city.name];
+                            if (city.admin3 && !parts.includes(city.admin3)) parts.push(city.admin3);
+                            if (city.admin2 && !parts.includes(city.admin2)) parts.push(city.admin2);
+                            if (city.admin1 && !parts.includes(city.admin1)) parts.push(city.admin1);
+                            if (city.country && !parts.includes(city.country)) parts.push(city.country);
+                            const fullName = parts.join(', ');
+                            let div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.innerText = fullName;
+                            div.onclick = function() {
+                                document.getElementById('city-search').value = fullName;
+                                selectedLat = city.latitude; selectedLon = city.longitude; selectedLocation = fullName;
+                                box.style.display = 'none';
+                                fetchWeather(); 
+                            };
+                            box.appendChild(div);
+                        });
+                        box.style.display = 'block';
+                    } else box.style.display = 'none';
+                } catch (e) {}
+            }, 300);
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'city-search') document.getElementById('suggestions-box').style.display = 'none';
+        });
+
+        async function fetchWeather() {
+            const query = document.getElementById('city-search').value;
+            if (!query) return;
+            const loading = document.getElementById('city-loading');
+            const t = i18n[currentLang];
+            loading.style.display = 'block';
+            loading.style.color = '#007aff';
+            loading.innerText = t.msg_loading;
+            
+            try {
+                let lat = selectedLat, lon = selectedLon, locName = selectedLocation;
+                if (lat === null) {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${currentLang}&format=json`);
+                    const geoData = await res.json();
+                    if (!geoData.results) throw new Error("No encontrada");
+                    const city = geoData.results[0];
+                    lat = city.latitude; lon = city.longitude;
+                    let parts = [city.name];
+                    if (city.admin3 && !parts.includes(city.admin3)) parts.push(city.admin3);
+                    if (city.admin2 && !parts.includes(city.admin2)) parts.push(city.admin2);
+                    if (city.admin1 && !parts.includes(city.admin1)) parts.push(city.admin1);
+                    if (city.country && !parts.includes(city.country)) parts.push(city.country);
+                    locName = parts.join(', ');
+                    document.getElementById('city-search').value = locName;
+                }
+                document.getElementById('suggestions-box').style.display = 'none';
+                
+                const response = await fetch(`/api/weather?lat=${lat}&lon=${lon}&loc=${encodeURIComponent(locName)}`);
+                if (!response.ok) throw new Error("Error en servidor");
+                const data = await response.json();
+                
+                document.getElementById('ta').value = data.current.ta;
+                document.getElementById('rh').value = data.current.rh;
+                document.getElementById('v').value = data.current.v;
+                document.getElementById('sr').value = data.current.sr;
+                
                 calculateWBGT();
-
-                // PASAMOS LOS DATOS MINUTO A MINUTO
+                
                 if (!data.minutely_15 || !data.minutely_15.time) throw new Error("Datos no disponibles");
                 await renderChart(data.minutely_15);
+                
+                loading.style.color = '#34c759';
+                loading.innerText = t.msg_success + data.location + "!";
+            } catch (error) {
+                loading.style.color = '#ff3b30';
+                loading.innerText = t.msg_error;
+            }
+        }
 
-@@ -253,77 +339,75 @@
+        async function calculateWBGT() {
+            const data = {
+                ta: parseFloat(document.getElementById('ta').value),
+                rh: parseFloat(document.getElementById('rh').value),
+                v: parseFloat(document.getElementById('v').value),
+                sr: parseFloat(document.getElementById('sr').value)
+            };
+            if (Object.values(data).some(isNaN)) return;
+            try {
+                const response = await fetch(`/api/wbgt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                const resultCard = document.getElementById('result-card');
+                resultCard.style.display = 'block';
+                document.getElementById('wbgt-value').innerText = result.wbgt + " °C";
+                
+                const riskInfo = getRiskData(result.wbgt);
+                document.getElementById('risk-text').innerText = riskInfo.title;
+                resultCard.style.backgroundColor = riskInfo.color;
+                resultCard.style.color = riskInfo.font;
+            } catch (error) {}
+        }
+
+        let wbgtChartInstance = null;
+        async function renderChart(minutelyData) {
             document.getElementById('chart-card').style.display = 'block';
             document.getElementById('chart-comment').style.display = 'none';
 
-            // SISTEMA DE CORTE TEMPORAL AUTOMÁTICO
             const now = new Date();
             let startIndex = minutelyData.time.findIndex(t => new Date(t) >= now);
             if (startIndex === -1) {
                 startIndex = 0;
             } else if (startIndex > 0) {
-                startIndex -= 1; // Un punto por detrás para enlazar visualmente
                 startIndex -= 1; 
             }
 
-            // RECORTAR PARA MOSTRAR EXACTAMENTE 96 PUNTOS (24 HORAS)
             const times = minutelyData.time.slice(startIndex, startIndex + 96);
             const tas = minutelyData.temperature_2m.slice(startIndex, startIndex + 96);
             const rhs = minutelyData.relative_humidity_2m.slice(startIndex, startIndex + 96);
@@ -225,7 +360,7 @@
                 const date = new Date(times[i]);
                 const mins = date.getMinutes().toString().padStart(2, '0');
                 labels.push(date.getHours() + ":" + mins);
-
+                
                 const payload = { ta: tas[i], rh: rhs[i], v: vs[i], sr: srs[i] };
                 wbgtPromises.push(
                     fetch('/api/wbgt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
@@ -264,7 +399,7 @@
                             const index = elements[0].index;
                             const val = wbgtValues[index];
                             const risk = getRiskData(val);
-
+                            
                             commentDiv.style.display = 'block';
                             commentDiv.style.borderLeft = `6px solid ${risk.color}`;
                             commentDiv.innerHTML = `<strong style="font-size: 15px;">Hora: ${labels[index]} | WBGT: ${val}°C</strong><br><span style="font-weight: 700; color: ${risk.color === '#ffcc00' ? '#d4a000' : risk.color};">${risk.title}</span><br><div style="margin-top: 6px;">${risk.text}</div>`;
