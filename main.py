@@ -50,22 +50,20 @@ def calculate_wbgt(data: WeatherData):
 @app.get("/api/weather")
 async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
-        # Petición a la base de datos: minutely_15 y forecast_days=2 para tener margen horario
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
+        # CORRECCIÓN: Quitamos el bloque 'current' porque Open-Meteo no acepta Radiación Solar ahí.
+        # Pedimos solo 'minutely_15' para extraer luego la hora actual.
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
+        
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
+        # Si Open-Meteo nos da error de sintaxis, lo atrapamos para verlo claro
         if "error" in weather_data:
-            raise HTTPException(status_code=404, detail="Ciudad no encontrada")
+            reason = weather_data.get("reason", "Error desconocido de Open-Meteo")
+            raise HTTPException(status_code=400, detail=reason)
         
         return {
             "location": loc, 
-            "current": {
-                "ta": weather_data["current"]["temperature_2m"],
-                "rh": weather_data["current"]["relative_humidity_2m"],
-                "v": weather_data["current"]["wind_speed_10m"],
-                "sr": weather_data["current"]["shortwave_radiation"]
-            },
             "minutely_15": weather_data.get("minutely_15", {})
         }
 
@@ -73,7 +71,6 @@ async def get_weather(lat: float, lon: float, loc: str):
 def serve_frontend():
     with open("index.html", "r", encoding="utf-8") as f:
         content = f.read()
-    # ESTO DESTRUYE EL CACHÉ DEL NAVEGADOR Y TE MUESTRA SIEMPRE LA VERSIÓN NUEVA
     return HTMLResponse(content=content, headers={
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",
