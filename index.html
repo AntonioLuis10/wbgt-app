@@ -416,22 +416,35 @@ async function fetchWeather() {
 
         let wbgtChartInstance = null;
         // RECIBIMOS LOS DATOS DE 15 EN 15 MINUTOS
+        let wbgtChartInstance = null;
         async function renderChart(minutelyData) {
             document.getElementById('chart-card').style.display = 'block';
             document.getElementById('chart-comment').style.display = 'none';
 
-            const times = minutelyData.time;
-            const tas = minutelyData.temperature_2m;
-            const rhs = minutelyData.relative_humidity_2m;
-            const vs = minutelyData.wind_speed_10m;
-            const srs = minutelyData.shortwave_radiation;
+            // 1. Buscamos en qué índice temporal estamos AHORA MISMO
+            const now = new Date();
+            let startIndex = minutelyData.time.findIndex(t => new Date(t) >= now);
+            
+            // Retrocedemos 1 punto (15 min) para que la gráfica empiece enganchada al instante actual
+            if (startIndex === -1) {
+                startIndex = 0;
+            } else if (startIndex > 0) {
+                startIndex -= 1;
+            }
+
+            // 2. Recortamos los arrays para coger exactamente los próximos 96 puntos (24 horas)
+            const times = minutelyData.time.slice(startIndex, startIndex + 96);
+            const tas = minutelyData.temperature_2m.slice(startIndex, startIndex + 96);
+            const rhs = minutelyData.relative_humidity_2m.slice(startIndex, startIndex + 96);
+            const vs = minutelyData.wind_speed_10m.slice(startIndex, startIndex + 96);
+            const srs = minutelyData.shortwave_radiation.slice(startIndex, startIndex + 96);
 
             const labels = [];
             const wbgtPromises = [];
 
             for (let i = 0; i < times.length; i++) {
                 const date = new Date(times[i]);
-                // AQUÍ GENERAMOS LA ETIQUETA CON LOS MINUTOS EXACTOS (Ej: 10:15)
+                // Generamos la etiqueta de texto (Ej: 10:15)
                 const mins = date.getMinutes().toString().padStart(2, '0');
                 labels.push(date.getHours() + ":" + mins);
                 
@@ -460,7 +473,7 @@ async function fetchWeather() {
                         tension: 0.4,
                         segment: { borderColor: ctx => getRiskData(ctx.p1.parsed.y).color },
                         pointBackgroundColor: context => getRiskData(context.dataset.data[context.dataIndex]).color,
-                        pointRadius: 4, // Hago el punto un poco más pequeño para que quepan bien los 96 puntos
+                        pointRadius: 4, 
                         pointHoverRadius: 8
                     }]
                 },
