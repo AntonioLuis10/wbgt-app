@@ -62,12 +62,28 @@ async def get_weather(city: str):
         lat = geo_data["results"][0]["latitude"]
         lon = geo_data["results"][0]["longitude"]
         
-        # 2. Pedir datos actuales y las próximas 24 horas
+        # 1. Extraemos todos los niveles de organización territorial
+        city_name = geo_data["results"][0].get("name", city)
+        provincia = geo_data["results"][0].get("admin2", "") # Provincia
+        ccaa = geo_data["results"][0].get("admin1", "")      # Comunidad Autónoma o Estado
+        pais = geo_data["results"][0].get("country", "")     # País
+        
+        # 2. Construimos la frase evitando que se repitan nombres (Ej: Madrid, Madrid)
+        location_parts = []
+        if city_name: location_parts.append(city_name)
+        if provincia and provincia not in location_parts: location_parts.append(provincia)
+        if ccaa and ccaa not in location_parts: location_parts.append(ccaa)
+        if pais and pais not in location_parts: location_parts.append(pais)
+        
+        full_location = ", ".join(location_parts)
+        
+        # 3. Pedimos los datos del tiempo
         weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_hours=24&timezone=auto"
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
         return {
+            "location": full_location, # <-- Envía la ubicación completa a la web
             "current": {
                 "ta": weather_data["current"]["temperature_2m"],
                 "rh": weather_data["current"]["relative_humidity_2m"],
