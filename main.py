@@ -62,15 +62,16 @@ async def get_weather(city: str):
         lat = geo_data["results"][0]["latitude"]
         lon = geo_data["results"][0]["longitude"]
         
-        # 1. Extraemos todos los niveles de organización territorial
         city_name = geo_data["results"][0].get("name", city)
+        municipio = geo_data["results"][0].get("admin3", "") # Municipio / Comarca
         provincia = geo_data["results"][0].get("admin2", "") # Provincia
-        ccaa = geo_data["results"][0].get("admin1", "")      # Comunidad Autónoma o Estado
+        ccaa = geo_data["results"][0].get("admin1", "")      # Comunidad Autónoma
         pais = geo_data["results"][0].get("country", "")     # País
         
-        # 2. Construimos la frase evitando que se repitan nombres (Ej: Madrid, Madrid)
+        # Construimos la frase evitando que se repitan nombres
         location_parts = []
         if city_name: location_parts.append(city_name)
+        if municipio and municipio not in location_parts: location_parts.append(municipio)
         if provincia and provincia not in location_parts: location_parts.append(provincia)
         if ccaa and ccaa not in location_parts: location_parts.append(ccaa)
         if pais and pais not in location_parts: location_parts.append(pais)
