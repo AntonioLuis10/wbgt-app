@@ -341,8 +341,7 @@
         document.addEventListener('click', function(e) {
             if (e.target.id !== 'city-search') document.getElementById('suggestions-box').style.display = 'none';
         });
-
-        async function fetchWeather() {
+async function fetchWeather() {
             const query = document.getElementById('city-search').value;
             if (!query) return;
             const loading = document.getElementById('city-loading');
@@ -378,6 +377,7 @@
                 document.getElementById('sr').value = data.current.sr;
                 
                 calculateWBGT();
+                // AQUÍ LE PASAMOS LOS DATOS DE 15 MINUTOS A LA GRÁFICA
                 await renderChart(data.minutely_15);
                 
                 loading.style.color = '#34c759';
@@ -415,23 +415,26 @@
         }
 
         let wbgtChartInstance = null;
-        async function renderChart(hourlyData) {
+        // RECIBIMOS LOS DATOS DE 15 EN 15 MINUTOS
+        async function renderChart(minutelyData) {
             document.getElementById('chart-card').style.display = 'block';
             document.getElementById('chart-comment').style.display = 'none';
 
-            const times = hourlyData.time;
-            const tas = hourlyData.temperature_2m;
-            const rhs = hourlyData.relative_humidity_2m;
-            const vs = hourlyData.wind_speed_10m;
-            const srs = hourlyData.shortwave_radiation;
+            const times = minutelyData.time;
+            const tas = minutelyData.temperature_2m;
+            const rhs = minutelyData.relative_humidity_2m;
+            const vs = minutelyData.wind_speed_10m;
+            const srs = minutelyData.shortwave_radiation;
 
             const labels = [];
             const wbgtPromises = [];
 
             for (let i = 0; i < times.length; i++) {
                 const date = new Date(times[i]);
+                // AQUÍ GENERAMOS LA ETIQUETA CON LOS MINUTOS EXACTOS (Ej: 10:15)
                 const mins = date.getMinutes().toString().padStart(2, '0');
                 labels.push(date.getHours() + ":" + mins);
+                
                 const payload = { ta: tas[i], rh: rhs[i], v: vs[i], sr: srs[i] };
                 wbgtPromises.push(
                     fetch('/api/wbgt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
@@ -457,7 +460,7 @@
                         tension: 0.4,
                         segment: { borderColor: ctx => getRiskData(ctx.p1.parsed.y).color },
                         pointBackgroundColor: context => getRiskData(context.dataset.data[context.dataIndex]).color,
-                        pointRadius: 5,
+                        pointRadius: 4, // Hago el punto un poco más pequeño para que quepan bien los 96 puntos
                         pointHoverRadius: 8
                     }]
                 },
@@ -479,6 +482,7 @@
                 }
             });
         }
+        
     </script>
 </body>
 </html>
