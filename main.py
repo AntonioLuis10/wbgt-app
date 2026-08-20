@@ -51,20 +51,24 @@ def calculate_wbgt(data: WeatherData):
 @app.get("/api/weather")
 async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
-        # Pedimos los datos del tiempo usando directamente la latitud y longitud
-        # ESTA ES LA URL CORREGIDA EN main.py
-weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
+        # URL corregida para minutely_15 (pidiendo 1 día para no saturar)
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=1&timezone=auto"
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
+        # Si la API devuelve un error (ej. falta una variable), lanzamos el 404
+        if "error" in weather_data:
+             raise HTTPException(status_code=404, detail="Error en Open-Meteo")
+
         return {
-            "location": loc, # Devuelve el nombre completo (Pueblo, Provincia, País)
+            "location": loc, 
             "current": {
                 "ta": weather_data["current"]["temperature_2m"],
                 "rh": weather_data["current"]["relative_humidity_2m"],
                 "v": weather_data["current"]["wind_speed_10m"],
                 "sr": weather_data["current"]["shortwave_radiation"]
             },
+            # Enviamos la matriz minutely_15
             "minutely_15": weather_data["minutely_15"]
         }
 
