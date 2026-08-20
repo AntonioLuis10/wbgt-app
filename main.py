@@ -64,7 +64,7 @@ async def get_weather(lat: float, lon: float, loc: str):
                 "v": weather_data["current"]["wind_speed_10m"],
                 "sr": weather_data["current"]["shortwave_radiation"]
             },
-            "hourly": weather_data["hourly"]
+            "minutely_15": weather_data["minutely_15"]
         }
 
 # PYTHON ENTREGA LA WEB DIRECTAMENTE
