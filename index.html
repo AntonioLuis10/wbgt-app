@@ -378,7 +378,7 @@
                 document.getElementById('sr').value = data.current.sr;
                 
                 calculateWBGT();
-                await renderChart(data.hourly);
+                await renderChart(data.minutely_15);
                 
                 loading.style.color = '#34c759';
                 loading.innerText = t.msg_success + data.location + "!";
@@ -430,7 +430,8 @@
 
             for (let i = 0; i < times.length; i++) {
                 const date = new Date(times[i]);
-                labels.push(date.getHours() + ":00");
+                const mins = date.getMinutes().toString().padStart(2, '0');
+                labels.push(date.getHours() + ":" + mins);
                 const payload = { ta: tas[i], rh: rhs[i], v: vs[i], sr: srs[i] };
                 wbgtPromises.push(
                     fetch('/api/wbgt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
