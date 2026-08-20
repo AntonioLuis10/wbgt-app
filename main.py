@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import math
+import httpx
 
 app = FastAPI()
 
@@ -43,7 +44,37 @@ def calculate_wbgt(data: WeatherData):
         "risk": risk_level
     }
 
-# ESTO ES LO NUEVO: Python entrega la web directamente
+# ESTA ES LA RUTA NUEVA PARA EL TIEMPO Y LA PREVISIÓN
+@app.get("/api/weather")
+async def get_weather(city: str):
+    async with httpx.AsyncClient() as client:
+        # 1. Buscar latitud y longitud
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=es&format=json"
+        geo_resp = await client.get(geo_url)
+        geo_data = geo_resp.json()
+        
+        if not geo_data.get("results"):
+            raise HTTPException(status_code=404, detail="Ciudad no encontrada")
+            
+        lat = geo_data["results"][0]["latitude"]
+        lon = geo_data["results"][0]["longitude"]
+        
+        # 2. Pedir datos actuales y las próximas 24 horas
+        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_hours=24&timezone=auto"
+        weather_resp = await client.get(weather_url)
+        weather_data = weather_resp.json()
+        
+        return {
+            "current": {
+                "ta": weather_data["current"]["temperature_2m"],
+                "rh": weather_data["current"]["relative_humidity_2m"],
+                "v": weather_data["current"]["wind_speed_10m"],
+                "sr": weather_data["current"]["shortwave_radiation"]
+            },
+            "hourly": weather_data["hourly"]
+        }
+
+# PYTHON ENTREGA LA WEB DIRECTAMENTE
 @app.get("/", response_class=HTMLResponse)
 def serve_frontend():
     with open("index.html", "r", encoding="utf-8") as f:
