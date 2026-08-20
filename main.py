@@ -52,7 +52,8 @@ def calculate_wbgt(data: WeatherData):
 async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
         # Pedimos los datos del tiempo usando directamente la latitud y longitud
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_hours=24&timezone=auto"
+        # ESTA ES LA URL CORREGIDA EN main.py
+weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto"
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
