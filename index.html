@@ -16,6 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="google-site-verification" content="qwkRJMtrRn9pGCcDd2gH4DA351yoCsNs7wRooNl1KSc" />
     <title>Eval WBGT</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="description" content="Calculadora online del índice WBGT para estimación de estrés térmico. Ideal para prevención de riesgos laborales y competiciones deportivas.">
 <meta name="keywords" content="calculadora WBGT, estrés térmico, ISO 7243, temperatura de globo, salud ocupacional, triatlón, calor">
 <meta name="author" content="Antonio Luis Díaz Díaz">
@@ -33,6 +34,14 @@
 <body>
     <div class="card">
         <h2 style="margin-top: 0; color: #000;">Ingesta de Datos</h2>
+        <div style="background: #f0f0f5; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <label style="margin-top:0;">Buscar por Localidad</label>
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <input type="text" id="city-search" placeholder="Ej. Águilas..." style="margin-top:0; flex-grow: 1;">
+                <button id="search-btn" onclick="fetchWeather()" style="margin-top:0; width: auto; padding: 12px 20px; background-color: #34c759;">Buscar</button>
+            </div>
+            <div id="city-loading" style="display:none; font-size:12px; margin-top:8px; font-weight:600;"></div>
+        </div>
         <label>Temperatura del Aire (Ta) [°C]</label>
         <input type="number" id="ta" inputmode="decimal" pattern="[0-9]*" autofocus>
         <label>Humedad Relativa (RH) [%]</label>
@@ -47,6 +56,10 @@
         <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Índice Calculado</div>
         <div id="wbgt-value" class="value">-- °C</div>
         <div id="risk-text" class="risk">--</div>
+    </div>
+    <div id="chart-card" class="card" style="display: none; margin-top: 20px;">
+        <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 16px;">Previsión WBGT (Próximas 24h)</h3>
+        <canvas id="wbgtChart"></canvas>
     </div>
     <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
     <p>Esta herramienta computacional estima el índice WBGT (Wet Bulb Globe Temperature) utilizando el modelo termodinámico de Liljegren para ambientes exteriores. Permite evaluar el riesgo por estrés térmico según la normativa ISO 7243 basándose en la temperatura del aire, humedad relativa, velocidad del viento y radiación solar.</p>
@@ -109,6 +122,105 @@
             } catch (error) {
                 alert("Error de red: El servidor Python no responde.");
             }
+        }
+        let wbgtChartInstance = null; 
+
+        async function fetchWeather() {
+            const city = document.getElementById('city-search').value;
+            if (!city) return;
+            
+            const loading = document.getElementById('city-loading');
+            loading.style.display = 'block';
+            loading.style.color = '#007aff';
+            loading.innerText = 'Cargando previsión y datos...';
+            
+            try {
+                const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+                if (!response.ok) throw new Error("Ciudad no encontrada");
+                
+                const data = await response.json();
+                
+                // Rellena los datos actuales
+                document.getElementById('ta').value = data.current.ta;
+                document.getElementById('rh').value = data.current.rh;
+                document.getElementById('v').value = data.current.v;
+                document.getElementById('sr').value = data.current.sr;
+                
+                calculateWBGT(); // Calcula el riesgo actual
+                await renderChart(data.hourly); // Dibuja la curva de 24h
+                
+                loading.style.color = '#34c759';
+                loading.innerText = '¡Datos actualizados!';
+                
+            } catch (error) {
+                loading.style.color = '#ff3b30';
+                loading.innerText = 'Error al buscar la ciudad.';
+            }
+        }
+
+        async function renderChart(hourlyData) {
+            document.getElementById('chart-card').style.display = 'block';
+
+            const times = hourlyData.time;
+            const tas = hourlyData.temperature_2m;
+            const rhs = hourlyData.relative_humidity_2m;
+            const vs = hourlyData.wind_speed_10m;
+            const srs = hourlyData.shortwave_radiation;
+
+            const labels = [];
+            const wbgtPromises = [];
+
+            for (let i = 0; i < times.length; i++) {
+                const date = new Date(times[i]);
+                labels.push(date.getHours() + ":00");
+
+                const payload = { ta: tas[i], rh: rhs[i], v: vs[i], sr: srs[i] };
+                wbgtPromises.push(
+                    fetch('/api/wbgt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(res => res.json())
+                );
+            }
+
+            const results = await Promise.all(wbgtPromises);
+            const wbgtValues = results.map(r => r.wbgt);
+
+            const ctx = document.getElementById('wbgtChart').getContext('2d');
+            if (wbgtChartInstance) wbgtChartInstance.destroy();
+
+            wbgtChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'WBGT (°C)',
+                        data: wbgtValues,
+                        borderColor: '#007aff',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        segment: {
+                            borderColor: ctx => {
+                                const val = ctx.p1.parsed.y;
+                                if (val >= 31.0) return '#ff3b30';
+                                if (val >= 28.0) return '#ffcc00';
+                                return '#34c759';
+                            }
+                        },
+                        pointBackgroundColor: context => {
+                            var value = context.dataset.data[context.dataIndex];
+                            if (value >= 31.0) return '#ff3b30';
+                            if (value >= 28.0) return '#ffcc00';
+                            return '#34c759';
+                        },
+                        pointRadius: 4
+                    }]
+                },
+                options: { responsive: true }
+            });
         }
     </script>
 </body>
