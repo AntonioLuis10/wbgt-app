@@ -30,14 +30,17 @@ def calculate_wbgt(data: WeatherData):
     tg = data.ta + (data.sr * 0.015) / (max(data.v, 0.1) ** 0.6)
     
     wbgt = 0.7 * tnw + 0.2 * tg + 0.1 * data.ta
-
-    risk_level = "Riesgo Bajo (Operación Normal)"
-    if wbgt >= 31.0:
-        risk_level = "Riesgo Letal / Límite Acción Ligero"
-    elif wbgt >= 28.0:
-        risk_level = "Límite Acción (Trabajo Moderado)"
-    elif wbgt >= 25.0:
-        risk_level = "Precaución (Trabajo Pesado)"
+    
+    if wbgt > 28.9:
+        risk_level = "Bandera Negra (Peligro Extremo)"
+    elif wbgt >= 27.3:
+        risk_level = "Bandera Roja (Riesgo Muy Alto)"
+    elif wbgt >= 25.1:
+        risk_level = "Bandera Naranja (Riesgo Alto)"
+    elif wbgt >= 22.2:
+        risk_level = "Bandera Amarilla (Riesgo Moderado)"
+    else:
+        risk_level = "Bandera Verde (Riesgo Bajo)"
 
     return {
         "wbgt": round(wbgt, 2),
