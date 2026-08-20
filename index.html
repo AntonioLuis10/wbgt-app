@@ -198,7 +198,7 @@
                 await renderChart(data.hourly);
                 
                 loading.style.color = '#34c759';
-                loading.innerText = '¡Análisis microclimático actualizado!';
+                loading.innerText = '¡Datos para ' + data.location + ' actualizados!';
             } catch (error) {
                 loading.style.color = '#ff3b30';
                 loading.innerText = 'Error al localizar la ciudad.';
