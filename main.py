@@ -47,44 +47,17 @@ def calculate_wbgt(data: WeatherData):
         "risk": risk_level
     }
 
-# ESTA ES LA RUTA NUEVA PARA EL TIEMPO Y LA PREVISIÓN
+# ESTA ES LA RUTA NUEVA QUE RECIBE LAS COORDENADAS DESDE TU LISTA DESPLEGABLE
 @app.get("/api/weather")
-async def get_weather(city: str):
+async def get_weather(lat: float, lon: float, loc: str):
     async with httpx.AsyncClient() as client:
-        # 1. Buscar latitud y longitud
-        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=es&format=json"
-        geo_resp = await client.get(geo_url)
-        geo_data = geo_resp.json()
-        
-        if not geo_data.get("results"):
-            raise HTTPException(status_code=404, detail="Ciudad no encontrada")
-            
-        lat = geo_data["results"][0]["latitude"]
-        lon = geo_data["results"][0]["longitude"]
-        
-        city_name = geo_data["results"][0].get("name", city)
-        municipio = geo_data["results"][0].get("admin3", "") # Municipio / Comarca
-        provincia = geo_data["results"][0].get("admin2", "") # Provincia
-        ccaa = geo_data["results"][0].get("admin1", "")      # Comunidad Autónoma
-        pais = geo_data["results"][0].get("country", "")     # País
-        
-        # Construimos la frase evitando que se repitan nombres
-        location_parts = []
-        if city_name: location_parts.append(city_name)
-        if municipio and municipio not in location_parts: location_parts.append(municipio)
-        if provincia and provincia not in location_parts: location_parts.append(provincia)
-        if ccaa and ccaa not in location_parts: location_parts.append(ccaa)
-        if pais and pais not in location_parts: location_parts.append(pais)
-        
-        full_location = ", ".join(location_parts)
-        
-        # 3. Pedimos los datos del tiempo
+        # Pedimos los datos del tiempo usando directamente la latitud y longitud
         weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_hours=24&timezone=auto"
         weather_resp = await client.get(weather_url)
         weather_data = weather_resp.json()
         
         return {
-            "location": full_location, # <-- Envía la ubicación completa a la web
+            "location": loc, # Devuelve el nombre completo (Pueblo, Provincia, País)
             "current": {
                 "ta": weather_data["current"]["temperature_2m"],
                 "rh": weather_data["current"]["relative_humidity_2m"],
