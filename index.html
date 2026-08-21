@@ -105,9 +105,8 @@
         <button onclick="analyzeSession()" style="background-color: #1c1c1e;">Analizar Sesión y Horario Ideal</button>
 
         <div id="tactical-results" style="display: none; margin-top: 20px;">
-            <!-- Caja Nueva: Horario Ideal Sugerido -->
             <div class="tactical-box" style="border-color: #007aff;">
-                <div class="tactical-title">Horario Ideal Sugerido (06:00 - 21:30)</div>
+                <div class="tactical-title">Horario Ideal Sugerido (Hoy)</div>
                 <div class="tactical-data" id="tactical-ideal"></div>
             </div>
             <div class="tactical-box" style="border-color: #34c759;">
@@ -131,7 +130,7 @@
         <canvas id="wbgtChart"></canvas>
     </div>
 
-    <!-- GLOSARIO FIJO (TEXTO ORIGINAL ÍNTEGRO) -->
+    <!-- GLOSARIO FIJO -->
     <div class="card" style="margin-top: 20px;">
         <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glosario de Protocolos Fisiológicos</h3>
         
@@ -269,9 +268,9 @@
                     let v_raw = data.minutely_15.wind_speed_10m[i];
                     let sr_val = data.minutely_15.shortwave_radiation[i];
 
-                    let v_real = v_raw * 0.6; // Atenuación de viento AGL
+                    let v_real = v_raw * 0.6; 
                     let ta_real = ta_raw;
-                    if (isAsfalto && sr_val > 50) { ta_real += 1.5; } // Re-radiación asfalto
+                    if (isAsfalto && sr_val > 50) { ta_real += 1.5; } 
 
                     const payload = { ta: ta_real, rh: rh_val, v: v_real, sr: sr_val };
                     validTimes.push(t_time);
@@ -290,7 +289,7 @@
                         timeLabel: label,
                         wbgt: results[i].wbgt,
                         flag: getRiskData(results[i].wbgt).title,
-                        dateObj: d // Guardamos el objeto fecha para los cálculos de ventana ideal
+                        dateObj: d 
                     });
 
                     if (d.getMinutes() === 0 || d.getMinutes() === 30) {
@@ -342,21 +341,27 @@
                 return;
             }
 
-            // 1. ANÁLISIS DE HORA IDEAL SUGERIDA (06:00 - 21:30)
+            // 1. ANÁLISIS DE HORA IDEAL SUGERIDA (Restringido solo a HOY hasta las 23:59)
             let duration = endIdx - startIdx; 
             let bestMaxWbgt = 999;
             let bestStartIndex = -1;
+            const now = new Date();
+            const currentDay = now.getDate();
 
-            // Escanear todas las ventanas de 'duration' posibles en las 24h
             for (let i = 0; i <= forecastDataArray.length - duration - 1; i++) {
                 let isValid = true;
                 let currentMax = -999;
                 
                 for (let j = i; j <= i + duration; j++) {
                     let t = forecastDataArray[j].dateObj;
+                    // CORRECCIÓN 1: Descartar si pasa del día actual (medianoche en adelante)
+                    if (t.getDate() !== currentDay) {
+                        isValid = false;
+                        break;
+                    }
+                    
                     let m = t.getHours() * 60 + t.getMinutes();
-                    // Limitar estrictamente entre 6:00 (360) y 21:30 (1290)
-                    if (m < 360 || m > 1290) {
+                    if (m < 360 || m > 1290) { // Entre 06:00 y 21:30
                         isValid = false;
                         break;
                     }
@@ -365,7 +370,6 @@
                     }
                 }
                 
-                // Si la ventana es válida por horario y tiene el WBGT más bajo
                 if (isValid && currentMax < bestMaxWbgt) {
                     bestMaxWbgt = currentMax;
                     bestStartIndex = i;
@@ -377,9 +381,9 @@
                 let sLabel = forecastDataArray[bestStartIndex].timeLabel;
                 let eLabel = forecastDataArray[bestStartIndex + duration].timeLabel;
                 let idealFlag = getRiskData(bestMaxWbgt).title;
-                idealText = `Para un bloque de <strong>${(duration * 15)} minutos</strong>, el momento con menos estrés térmico hoy/mañana es de <strong>${sLabel} a ${eLabel}</strong>. El pico máximo de la sesión será de solo <strong>${bestMaxWbgt.toFixed(1)}°C (Bandera ${idealFlag})</strong>.`;
+                idealText = `Para un bloque de <strong>${(duration * 15)} minutos</strong>, el momento con menos estrés térmico hoy es de <strong>${sLabel} a ${eLabel}</strong>. El pico máximo de la sesión será de solo <strong>${bestMaxWbgt.toFixed(1)}°C (Bandera ${idealFlag})</strong>.`;
             } else {
-                idealText = "No hay ventanas disponibles de esa duración entre las 06:00 y las 21:30 en las próximas 24 horas (ej. sesión demasiado larga).";
+                idealText = "No quedan ventanas de esa duración disponibles hoy entre las 06:00 y las 21:30. Deberás posponer la sesión para mañana.";
             }
             document.getElementById('tactical-ideal').innerHTML = idealText;
 
@@ -404,27 +408,29 @@
             } else if (startFlag === "Verde" && endFlag === "Naranja") {
                 protoText = "Euhidratación completa. Ingerir 500 mL de agua de 60 a 90 minutos antes. Tomar un vaso de agua muy fría 15 minutos antes de salir.";
             } else if (startFlag === "Amarilla" && endFlag === "Naranja") {
-                protoText = "Euhidratación reforzada. Ingerir 500 mL de agua con una pizca de electrólitos o sal marina de 60 a 90 minutos antes para evitar déficit osmótico.";
+                protoText = "Euhidratación reforzada. Ingerir 500 mL de agua con una pizca de electrólitos o sal marina de 60 a 90 minutos antes para evitar iniciar con déficit osmótico.";
             } else {
-                if (startLvl >= 4) protoText = "Peligro Extremo de hipertermia. Obligatorio PRE-COOLING AGRESIVO (7,5g/kg Ice Slurry 30 min antes).";
-                else if (startLvl === 3) protoText = "Riesgo Alto sostenido. Se exige hiperhidratación osmótica previa (Protocolo de Sodio o Glicerol).";
+                if (startLvl >= 4) protoText = "Peligro Extremo de hipertermia. Obligatorio preparar el cuerpo con <strong>PRE-COOLING AGRESIVO</strong> (7,5g/kg Ice Slurry 30 min antes).";
+                else if (startLvl === 3) protoText = "Riesgo Alto sostenido. Se exige <strong>Hiperhidratación Osmótica</strong> previa (Protocolo de Sodio o Glicerol) para aumentar tu reserva de plasma.";
                 else protoText = "Condiciones estables. Mantén euhidratación estándar (300-500 mL previos).";
             }
 
+            // CORRECCIÓN 2: Texto de transición limpio, sin sugerencias de calentamiento
             if (endLvl > startLvl) {
-                transText = `<strong>Transición Ascendente (Sube el calor).</strong> El estrés térmico aumenta a la vez que tu fatiga. La sesión se rige por la <strong>Bandera ${highestFlag}</strong>. Mantén un ritmo conservador los primeros 20 minutos.`;
+                transText = `<strong>Transición Ascendente (Sube el calor).</strong> El estrés térmico aumenta a la vez que tu fatiga. Toda la sesión se rige bajo la <strong>Bandera ${highestFlag}</strong> final.`;
             } else if (endLvl < startLvl) {
-                transText = `<strong>Transición Descendente (Refresca).</strong> El mayor impacto térmico será en las primeras series. Inicia con calentamiento muy suave (Z1) y no aprietes hasta que caiga el WBGT.`;
+                transText = `<strong>Transición Descendente (Refresca).</strong> El mayor impacto térmico se producirá al principio de la sesión, ya que el estrés térmico del ambiente irá disminuyendo progresivamente.`;
             } else {
                 transText = `<strong>Evolución Estable.</strong> La sesión discurre íntegramente bajo condiciones de Bandera ${highestFlag}.`;
             }
 
+            // CORRECCIÓN 3: Conexión lógica entre el Protocolo y el Límite de Peso Cero
             const maxTime = maxTimeMatrix[highestFlag][intensity];
             let limitText = "";
             if (maxTime === 0) {
-                limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda la refrigeración cutánea. Obligatorio portar bidones o detenerse a hidratar.`;
+                limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda por completo la capacidad de refrigeración cutánea. Es obligatorio portar bidones o detenerse a hidratar, independientemente del protocolo previo que hayas hecho.`;
             } else {
-                limitText = `Basado en la Bandera ${highestFlag} y la relación Trabajo/Descanso, tu límite seguro a Peso Cero son <strong>${maxTime} minutos</strong>.`;
+                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} haciendo tu sesión fundirá esa reserva interna en <strong>${maxTime} minutos</strong>. A partir de ese minuto, es obligatorio portar hidratación externa (bidones).`;
             }
 
             document.getElementById('tactical-results').style.display = 'block';
