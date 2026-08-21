@@ -85,12 +85,13 @@
         
         <label>Tipo de Entrenamiento</label>
         <select id="workout-type" onchange="toggleIntervalInputs()">
+            <!-- Ahora asume por defecto que vas a hacer Series -->
+            <option value="intervals" selected>Series / Fartlek (Interválico)</option>
             <option value="continuous">Rodaje Suave / Continuo (Z1-Z2)</option>
-            <option value="intervals">Series / Fartlek (Interválico)</option>
         </select>
 
-        <!-- Controles dinámicos para los intervalos -->
-        <div id="interval-controls" style="display: none; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
+        <!-- Controles dinámicos para los intervalos. Ahora están visibles desde el inicio -->
+        <div id="interval-controls" style="display: block; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
             <div style="display: flex; gap: 10px;">
                 <div style="flex-grow: 1;">
                     <label style="margin-top: 0; font-size: 12px;">Minutos Rápidos (Trabajo)</label>
