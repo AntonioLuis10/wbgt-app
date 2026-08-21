@@ -270,12 +270,15 @@
             
             try {
                 let lat = selectedLat, lon = selectedLon, locName = selectedLocation;
+                
+                // 1. Geolocalización (Navegador -> Open-Meteo)
                 if (lat === null) {
                     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${currentLang}&format=json`);
                     const geoData = await res.json();
-                    if (!geoData.results) throw new Error("No encontrada");
+                    if (!geoData.results) throw new Error("Ciudad no encontrada");
                     const city = geoData.results[0];
                     lat = city.latitude; lon = city.longitude;
+                    
                     let parts = [city.name];
                     if (city.admin3 && !parts.includes(city.admin3)) parts.push(city.admin3);
                     if (city.admin2 && !parts.includes(city.admin2)) parts.push(city.admin2);
@@ -284,27 +287,41 @@
                     locName = parts.join(', ');
                     document.getElementById('city-search').value = locName;
                 }
+                
                 document.getElementById('suggestions-box').style.display = 'none';
                 
-                const response = await fetch(`/api/weather?lat=${lat}&lon=${lon}&loc=${encodeURIComponent(locName)}`);
-                if (!response.ok) throw new Error("Error en servidor");
+                // 2. DESCARGA DIRECTA DE DATOS (Navegador -> Open-Meteo, BYPASS A RENDER)
+                const weather_url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&minutely_15=temperature_2m,relative_humidity_2m,wind_speed_10m,shortwave_radiation&wind_speed_unit=ms&forecast_days=2&timezone=auto`;
+                
+                const response = await fetch(weather_url);
+                if (!response.ok) throw new Error("Límite de Open-Meteo alcanzado en tu red actual");
+                
                 const data = await response.json();
+                if (!data.minutely_15 || !data.minutely_15.time) throw new Error("Datos de 15 minutos no disponibles");
                 
-                document.getElementById('ta').value = data.current.ta;
-                document.getElementById('rh').value = data.current.rh;
-                document.getElementById('v').value = data.current.v;
-                document.getElementById('sr').value = data.current.sr;
+                // 3. Ventana móvil de 24 horas
+                const now = new Date();
+                let startIndex = data.minutely_15.time.findIndex(t => new Date(t) >= now);
+                if (startIndex === -1) {
+                    startIndex = 0;
+                } else if (startIndex > 0) {
+                    startIndex -= 1;
+                }
                 
+                document.getElementById('ta').value = data.minutely_15.temperature_2m[startIndex];
+                document.getElementById('rh').value = data.minutely_15.relative_humidity_2m[startIndex];
+                document.getElementById('v').value = data.minutely_15.wind_speed_10m[startIndex];
+                document.getElementById('sr').value = data.minutely_15.shortwave_radiation[startIndex];
+                
+                // 4. Manda los datos a Python solo para el cálculo matemático
                 calculateWBGT();
-                
-                if (!data.minutely_15 || !data.minutely_15.time) throw new Error("Datos no disponibles");
                 await renderChart(data.minutely_15);
                 
                 loading.style.color = '#34c759';
-                loading.innerText = t.msg_success + data.location + "!";
+                loading.innerText = t.msg_success + locName + "!";
             } catch (error) {
                 loading.style.color = '#ff3b30';
-                loading.innerText = t.msg_error;
+                loading.innerText = "Error: " + error.message;
             }
         }
 
