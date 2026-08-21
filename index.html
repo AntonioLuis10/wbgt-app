@@ -83,13 +83,26 @@
     <div id="planner-card" class="card" style="display: none; margin-top: 20px;">
         <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 18px;">Analizador de Sesión</h3>
         
-        <label>Intensidad del Bloque Principal</label>
-        <select id="workout-intensity">
-            <option value="Z1">Z1-Z2: Rodaje Suave (Base)</option>
-            <option value="Z3">Nivel 1: Tempo / Fartlek Corto (Trabajo ≤ Descanso)</option>
-            <option value="Z4">Nivel 2: Series Largas / Fartlek Extenso (Pausas amplias)</option>
-            <option value="Z5">Nivel 3: Alta Intensidad (Pausas incompletas < 1min)</option>
+        <label>Tipo de Entrenamiento</label>
+        <select id="workout-type" onchange="toggleIntervalInputs()">
+            <option value="continuous">Rodaje Suave / Continuo (Z1-Z2)</option>
+            <option value="intervals">Series / Fartlek (Interválico)</option>
         </select>
+
+        <!-- Controles dinámicos para los intervalos -->
+        <div id="interval-controls" style="display: none; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <div style="display: flex; gap: 10px;">
+                <div style="flex-grow: 1;">
+                    <label style="margin-top: 0; font-size: 12px;">Minutos Rápidos (Trabajo)</label>
+                    <input type="number" id="fast-time" value="3" min="0.5" step="0.5" style="margin-top: 5px;">
+                </div>
+                <div style="flex-grow: 1;">
+                    <label style="margin-top: 0; font-size: 12px;">Minutos Lentos (Descanso)</label>
+                    <input type="number" id="slow-time" value="1.5" min="0.5" step="0.5" style="margin-top: 5px;">
+                </div>
+            </div>
+            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*El sistema calculará automáticamente el nivel de carga (1, 2 o 3) basándose en el ratio Trabajo:Descanso.</p>
+        </div>
 
         <div style="display: flex; gap: 10px;">
             <div style="flex-grow: 1;">
@@ -108,6 +121,10 @@
             <div class="tactical-box" style="border-color: #007aff;">
                 <div class="tactical-title">Horario Ideal Sugerido (Hoy)</div>
                 <div class="tactical-data" id="tactical-ideal"></div>
+            </div>
+            <div class="tactical-box" style="border-color: #8e8e93;">
+                <div class="tactical-title">Evaluación de Carga Térmica</div>
+                <div class="tactical-data" id="tactical-load"></div>
             </div>
             <div class="tactical-box" style="border-color: #34c759;">
                 <div class="tactical-title">Transición Térmica de tu Selección</div>
@@ -191,6 +208,16 @@
                 fetchWeather();
             });
         };
+
+        function toggleIntervalInputs() {
+            const type = document.getElementById('workout-type').value;
+            const controls = document.getElementById('interval-controls');
+            if (type === 'intervals') {
+                controls.style.display = 'block';
+            } else {
+                controls.style.display = 'none';
+            }
+        }
 
         const flagLevels = { "Verde": 1, "Amarilla": 2, "Naranja": 3, "Roja": 4, "Negra": 5 };
 
@@ -334,14 +361,36 @@
         function analyzeSession() {
             const startIdx = parseInt(document.getElementById('session-start').value);
             const endIdx = parseInt(document.getElementById('session-end').value);
-            const intensity = document.getElementById('workout-intensity').value;
+            const workoutType = document.getElementById('workout-type').value;
 
             if (startIdx >= endIdx) {
                 alert("La hora de fin debe ser posterior a la de inicio.");
                 return;
             }
 
-            // 1. ANÁLISIS DE HORA IDEAL SUGERIDA (Restringido solo a HOY hasta las 23:59)
+            // --- LÓGICA DE CLASIFICACIÓN DE INTENSIDAD ---
+            let intensity = "Z1";
+            let loadExplanation = "Rodaje continuo a baja intensidad. La producción de calor metabólico es sostenida pero moderada, equivalente a Zona 1 / Zona 2.";
+
+            if (workoutType === "intervals") {
+                let fast = parseFloat(document.getElementById('fast-time').value) || 0;
+                let slow = parseFloat(document.getElementById('slow-time').value) || 0;
+                let ratio = slow > 0 ? (fast / slow) : 999;
+
+                if (slow <= 1 || ratio >= 3) {
+                    intensity = "Z5"; 
+                    loadExplanation = `<strong>Nivel 3 (Carga Extrema):</strong> Tasa de sudoración disparada. La pausa es incompleta (≤ 1 min) o el trabajo rápido triplica al descanso. Equivalente a estrés continuo de Z5.`;
+                } else if (fast > slow) {
+                    intensity = "Z4";
+                    loadExplanation = `<strong>Nivel 2 (Carga Alta):</strong> El tiempo rápido es mayor que el descanso, acumulando temperatura central "en escalera", pero la pausa es suficiente (> 1 min) para evitar asfixia térmica. Equivalente a Z4.`;
+                } else {
+                    intensity = "Z3";
+                    loadExplanation = `<strong>Nivel 1 (Carga Moderada):</strong> El tiempo de recuperación es holgado (igual o mayor al trabajo), permitiendo disipar gran parte del calor metabólico. Equivalente a Z3.`;
+                }
+            }
+
+
+            // --- HORA IDEAL SUGERIDA ---
             let duration = endIdx - startIdx; 
             let bestMaxWbgt = 999;
             let bestStartIndex = -1;
@@ -354,16 +403,13 @@
                 
                 for (let j = i; j <= i + duration; j++) {
                     let t = forecastDataArray[j].dateObj;
-                    // CORRECCIÓN 1: Descartar si pasa del día actual (medianoche en adelante)
                     if (t.getDate() !== currentDay) {
-                        isValid = false;
-                        break;
+                        isValid = false; break;
                     }
                     
                     let m = t.getHours() * 60 + t.getMinutes();
                     if (m < 360 || m > 1290) { // Entre 06:00 y 21:30
-                        isValid = false;
-                        break;
+                        isValid = false; break;
                     }
                     if (forecastDataArray[j].wbgt > currentMax) {
                         currentMax = forecastDataArray[j].wbgt;
@@ -371,8 +417,7 @@
                 }
                 
                 if (isValid && currentMax < bestMaxWbgt) {
-                    bestMaxWbgt = currentMax;
-                    bestStartIndex = i;
+                    bestMaxWbgt = currentMax; bestStartIndex = i;
                 }
             }
 
@@ -385,10 +430,9 @@
             } else {
                 idealText = "No quedan ventanas de esa duración disponibles hoy entre las 06:00 y las 21:30. Deberás posponer la sesión para mañana.";
             }
-            document.getElementById('tactical-ideal').innerHTML = idealText;
 
 
-            // 2. ANÁLISIS DE LA HORA SELECCIONADA POR EL USUARIO
+            // --- ANÁLISIS DE LA HORA SELECCIONADA ---
             let block = forecastDataArray.slice(startIdx, endIdx + 1);
             let startFlag = block[0].flag;
             let endFlag = block[block.length - 1].flag;
@@ -400,7 +444,6 @@
 
             const startLvl = flagLevels[startFlag];
             const endLvl = flagLevels[endFlag];
-
             let transText = ""; let protoText = "";
 
             if (startFlag === "Verde" && endFlag === "Amarilla") {
@@ -415,7 +458,6 @@
                 else protoText = "Condiciones estables. Mantén euhidratación estándar (300-500 mL previos).";
             }
 
-            // CORRECCIÓN 2: Texto de transición limpio, sin sugerencias de calentamiento
             if (endLvl > startLvl) {
                 transText = `<strong>Transición Ascendente (Sube el calor).</strong> El estrés térmico aumenta a la vez que tu fatiga. Toda la sesión se rige bajo la <strong>Bandera ${highestFlag}</strong> final.`;
             } else if (endLvl < startLvl) {
@@ -424,16 +466,18 @@
                 transText = `<strong>Evolución Estable.</strong> La sesión discurre íntegramente bajo condiciones de Bandera ${highestFlag}.`;
             }
 
-            // CORRECCIÓN 3: Conexión lógica entre el Protocolo y el Límite de Peso Cero
             const maxTime = maxTimeMatrix[highestFlag][intensity];
             let limitText = "";
             if (maxTime === 0) {
                 limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda por completo la capacidad de refrigeración cutánea. Es obligatorio portar bidones o detenerse a hidratar, independientemente del protocolo previo que hayas hecho.`;
             } else {
-                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} haciendo tu sesión fundirá esa reserva interna en <strong>${maxTime} minutos</strong>. A partir de ese minuto, es obligatorio portar hidratación externa (bidones).`;
+                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} fundirá esa reserva interna. Basado en tu relación Trabajo/Descanso, <strong>tu límite seguro a Peso Cero son ${maxTime} minutos</strong>. A partir de ese minuto, es obligatorio portar hidratación externa (bidones).`;
             }
 
+            // PINTAR DATOS EN UI
             document.getElementById('tactical-results').style.display = 'block';
+            document.getElementById('tactical-ideal').innerHTML = idealText;
+            document.getElementById('tactical-load').innerHTML = loadExplanation;
             document.getElementById('tactical-transition').innerHTML = `De Bandera ${startFlag} (${block[0].timeLabel}) a Bandera ${endFlag} (${block[block.length-1].timeLabel}).<br><br>${transText}`;
             document.getElementById('tactical-protocol').innerHTML = protoText;
             document.getElementById('tactical-limit').innerHTML = limitText;
