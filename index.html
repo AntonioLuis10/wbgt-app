@@ -41,6 +41,9 @@
         .glossary-item { margin-top: 15px; }
         .glossary-item h4 { margin: 0 0 5px 0; color: #007aff; font-size: 16px; }
         .glossary-item p { font-size: 14px; color: #333; line-height: 1.6; margin-top: 0; }
+        table.tactical-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        table.tactical-table th, table.tactical-table td { border: 1px solid #d1d1d6; padding: 8px; text-align: left; }
+        table.tactical-table th { background-color: #f0f0f5; color: #1c1c1e; }
     </style>
 </head>
 <body>
@@ -67,10 +70,6 @@
 
             <div id="city-loading" style="display:none; font-size:12px; margin-top:8px; font-weight:600;"></div>
         </div>
-
-        <div style="display: none;">
-            <input type="number" id="ta"><input type="number" id="rh"><input type="number" id="v"><input type="number" id="sr">
-        </div>
     </div>
     
     <div id="result-card" class="card">
@@ -85,24 +84,24 @@
         
         <label>Tipo de Entrenamiento</label>
         <select id="workout-type" onchange="toggleIntervalInputs()">
-            <!-- Ahora asume por defecto que vas a hacer Series -->
             <option value="intervals" selected>Series / Fartlek (Interválico)</option>
-            <option value="continuous">Rodaje Suave / Continuo (Z1-Z2)</option>
+            <option value="cont_z1">Rodaje Continuo Suave (Z1-Z2)</option>
+            <option value="cont_z3">Rodaje Continuo Tempo (Z3)</option>
+            <option value="cont_z4">Rodaje Continuo Umbral (Z4)</option>
         </select>
 
-        <!-- Controles dinámicos para los intervalos. Ahora están visibles desde el inicio -->
         <div id="interval-controls" style="display: block; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
             <div style="display: flex; gap: 10px;">
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Minutos Rápidos (Trabajo)</label>
+                    <label style="margin-top: 0; font-size: 12px;">Minutos Rápidos</label>
                     <input type="number" id="fast-time" value="3" min="0.5" step="0.5" style="margin-top: 5px;">
                 </div>
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Minutos Lentos (Descanso)</label>
+                    <label style="margin-top: 0; font-size: 12px;">Minutos Lentos (Pausa)</label>
                     <input type="number" id="slow-time" value="1.5" min="0.5" step="0.5" style="margin-top: 5px;">
                 </div>
             </div>
-            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*El sistema calculará automáticamente el nivel de carga (1, 2 o 3) basándose en el ratio Trabajo:Descanso.</p>
+            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*Se calculará tu nivel de carga térmica (1, 2 o 3) en base al ratio de la serie.</p>
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -173,6 +172,36 @@
                 <p>El pre-cooling agresivo (o preenfriamiento) agrupa técnicas físicas y metabólicas para bajar tu temperatura corporal central (rectal) y cutánea por debajo de lo normal antes de empezar a correr. Al "enfriar el motor" por adelantado, aumentas el margen o la capacidad de tu cuerpo para almacenar calor antes de llegar al peligroso límite de la hipertermia (temperatura interna > 40 °C).<br><br>
                 <strong>La técnica del Granizado de Hielo (Ice Slurry):</strong> Es el método interno más eficaz. Consiste en ingerir un granizado de hielo picado (7,5 gramos por kilo de peso) unos 30 minutos antes de la salida. Al derretirse el hielo dentro de tu estómago, pasa de sólido a líquido y absorbe una inmensa cantidad de energía térmica (calor latente de fusión), logrando desplomar tu temperatura interna entre 0,3 °C y 0,6 °C antes de correr.<br>
                 <strong>Enfriamiento Externo Combinado:</strong> Se complementa aplicando frío directo en el exterior (mediante chalecos de hielo o compresas frías en el cuello y las ingles) durante 20 o 30 minutos para enfriar la sangre que pasa por las grandes arterias (carótidas y femorales), retrasando la necesidad de que tu cuerpo bombee sangre a la piel para enfriarse.</p>
+            </div>
+            
+            <div class="glossary-item">
+                <h4>4. Carga Térmica y Estrategia a Peso Cero</h4>
+                <p>Para dividir y clasificar el impacto térmico, la clave no es la distancia, sino la producción continua de calor vs. el descanso:<br><br>
+                <strong>Rodaje Z3 (Nivel 2) y Z4 (Nivel 3):</strong> La musculatura genera 15 a 20+ veces más calor metabólico ininterrumpidamente. Al no haber micro-pausas, la tasa de sudoración se dispara (>1.5 - 2 L/h en Z4) y las pulsaciones suben en un ascenso térmico rápido.<br>
+                <strong>Fartlek / Series:</strong> El nivel depende del Ratio (Trabajo:Descanso). Si la pausa es amplia (Trabajo ≤ Descanso, <strong>Nivel 1</strong>), la FC baja y el calor se disipa. Si la pausa es insuficiente (Pausa ≤ 1 min o Trabajo ≥ 3x Descanso, <strong>Nivel 3</strong>), el cuerpo funciona como en esfuerzo continuo al límite.</p>
+                
+                <table class="tactical-table">
+                    <tr>
+                        <th>Nivel de Carga</th>
+                        <th>Relación Rápido / Lento</th>
+                        <th>Condición de Tiempos</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Nivel 1 (Moderado)</strong></td>
+                        <td>Ratio ≤ 1:1</td>
+                        <td>El tiempo Lento es <strong>igual o mayor</strong> que el rápido.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nivel 2 (Alto)</strong></td>
+                        <td>Ratio entre 1,1:1 y 2:1</td>
+                        <td>El tiempo rápido es <strong>mayor</strong> que el lento, con pausa suficiente.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nivel 3 (Extremo)</strong></td>
+                        <td>Ratio ≥ 3:1 o Pausa ≤ 1 min</td>
+                        <td>Tiempo rápido triplica al lento, o la pausa es <strong>incompleta</strong> (≤ 1 min).</td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>
@@ -352,7 +381,7 @@
         }
 
         const maxTimeMatrix = {
-            "Verde":   { "Z1": 75, "Z3": 60, "Z4": 45, "Z5": 35 },
+            "Verde":   { "Z1": 90, "Z3": 60, "Z4": 45, "Z5": 35 },
             "Amarilla":{ "Z1": 60, "Z3": 45, "Z4": 30, "Z5": 20 },
             "Naranja": { "Z1": 40, "Z3": 30, "Z4": 15, "Z5": 10 },
             "Roja":    { "Z1": 25, "Z3": 15, "Z4": 0,  "Z5": 0 },
@@ -371,7 +400,7 @@
 
             // --- LÓGICA DE CLASIFICACIÓN DE INTENSIDAD ---
             let intensity = "Z1";
-            let loadExplanation = "Rodaje continuo a baja intensidad. La producción de calor metabólico es sostenida pero moderada, equivalente a Zona 1 / Zona 2.";
+            let loadExplanation = "";
 
             if (workoutType === "intervals") {
                 let fast = parseFloat(document.getElementById('fast-time').value) || 0;
@@ -380,16 +409,24 @@
 
                 if (slow <= 1 || ratio >= 3) {
                     intensity = "Z5"; 
-                    loadExplanation = `<strong>Nivel 3 (Carga Extrema):</strong> Tasa de sudoración disparada. La pausa es incompleta (≤ 1 min) o el trabajo rápido triplica al descanso. Equivalente a estrés continuo de Z5.`;
+                    loadExplanation = `<strong>Nivel 3 (Carga Extrema):</strong> Fartlek / Series Nivel 3. La pausa es incompleta (≤ 1 min) o el trabajo rápido triplica al descanso. Funciona casi como un esfuerzo continuo al límite.`;
                 } else if (fast > slow) {
                     intensity = "Z4";
-                    loadExplanation = `<strong>Nivel 2 (Carga Alta):</strong> El tiempo rápido es mayor que el descanso, acumulando temperatura central "en escalera", pero la pausa es suficiente (> 1 min) para evitar asfixia térmica. Equivalente a Z4.`;
+                    loadExplanation = `<strong>Nivel 2 (Carga Alta):</strong> Fartlek / Series Nivel 2. El tiempo rápido es mayor que el descanso, acumulando temperatura central "en escalera", pero la pausa es suficiente (> 1 min).`;
                 } else {
                     intensity = "Z3";
-                    loadExplanation = `<strong>Nivel 1 (Carga Moderada):</strong> El tiempo de recuperación es holgado (igual o mayor al trabajo), permitiendo disipar gran parte del calor metabólico. Equivalente a Z3.`;
+                    loadExplanation = `<strong>Nivel 1 (Carga Moderada):</strong> Fartlek / Series Nivel 1. El tiempo de recuperación es igual o mayor al trabajo (Ratio ≤ 1:1), permitiendo disipar gran parte del calor metabólico.`;
                 }
+            } else if (workoutType === "cont_z1") {
+                intensity = "Z1";
+                loadExplanation = `<strong>Nivel 0 / Base (Carga Moderada):</strong> Rodaje continuo a baja intensidad (Z1-Z2). Producción de calor metabólico moderada pero ininterrumpida.`;
+            } else if (workoutType === "cont_z3") {
+                intensity = "Z3";
+                loadExplanation = `<strong>Nivel 2 (Carga Térmica Alta):</strong> Rodaje continuo en Zona 3. La musculatura genera 15-20 veces más calor que en reposo sin pausas. Temperatura central al alza.`;
+            } else if (workoutType === "cont_z4") {
+                intensity = "Z4";
+                loadExplanation = `<strong>Nivel 3 (Carga Térmica Extrema):</strong> Rodaje continuo en Zona 4. Calor metabólico masivo (>20 veces el reposo). Tasa de sudoración disparada y ascenso térmico fulminante.`;
             }
-
 
             // --- HORA IDEAL SUGERIDA ---
             let duration = endIdx - startIdx; 
@@ -409,7 +446,7 @@
                     }
                     
                     let m = t.getHours() * 60 + t.getMinutes();
-                    if (m < 360 || m > 1290) { // Entre 06:00 y 21:30
+                    if (m < 360 || m > 1290) { 
                         isValid = false; break;
                     }
                     if (forecastDataArray[j].wbgt > currentMax) {
@@ -431,7 +468,6 @@
             } else {
                 idealText = "No quedan ventanas de esa duración disponibles hoy entre las 06:00 y las 21:30. Deberás posponer la sesión para mañana.";
             }
-
 
             // --- ANÁLISIS DE LA HORA SELECCIONADA ---
             let block = forecastDataArray.slice(startIdx, endIdx + 1);
@@ -470,12 +506,11 @@
             const maxTime = maxTimeMatrix[highestFlag][intensity];
             let limitText = "";
             if (maxTime === 0) {
-                limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda por completo la capacidad de refrigeración cutánea. Es obligatorio portar bidones o detenerse a hidratar, independientemente del protocolo previo que hayas hecho.`;
+                limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda por completo la capacidad de refrigeración cutánea. Es obligatorio portar bidones o detenerse a hidratar.`;
             } else {
-                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} fundirá esa reserva interna. Basado en tu relación Trabajo/Descanso, <strong>tu límite seguro a Peso Cero son ${maxTime} minutos</strong>. A partir de ese minuto, es obligatorio portar hidratación externa (bidones).`;
+                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} fundirá esa reserva interna. Basado en tu nivel de esfuerzo, <strong>tu límite seguro a Peso Cero son ${maxTime} minutos</strong>. A partir de ahí, es obligatorio portar hidratación externa (bidones).`;
             }
 
-            // PINTAR DATOS EN UI
             document.getElementById('tactical-results').style.display = 'block';
             document.getElementById('tactical-ideal').innerHTML = idealText;
             document.getElementById('tactical-load').innerHTML = loadExplanation;
