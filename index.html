@@ -75,35 +75,48 @@
         <div id="risk-text" class="risk">--</div>
     </div>
 
-    <!-- PLANIFICADOR DE SESIONES (NUEVA MATRIZ DE ZONAS) -->
+    <!-- PLANIFICADOR DE SESIONES -->
     <div id="planner-card" class="card" style="display: none; margin-top: 20px;">
         <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 18px;">Matriz Analítica de Sesión</h3>
         
         <div id="interval-controls" style="background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
-            <label style="margin-top: 0;">Intensidad (Zonas de Frecuencia Cardíaca)</label>
-            <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <label style="margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Configuración del Bloque Principal</label>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Zona de Trabajo ($Z_w$)</label>
-                    <select id="zone-w">
+                    <label style="margin-top: 0; font-size: 12px; color: #007aff;">Minutos Rápidos</label>
+                    <input type="number" id="fast-time" value="3" min="0.5" step="0.5" style="margin-top: 5px;">
+                </div>
+                <div style="flex-grow: 1;">
+                    <label style="margin-top: 0; font-size: 12px; color: #007aff;">Zona (Z<sub>w</sub>)</label>
+                    <select id="zone-w" style="margin-top: 5px;">
                         <option value="Z1">Z1 - Suave</option>
                         <option value="Z2">Z2 - Rodaje</option>
                         <option value="Z3">Z3 - Tempo</option>
                         <option value="Z4" selected>Z4 - Umbral</option>
-                        <option value="Z5">Z5 - Sprint / VO2</option>
+                        <option value="Z5">Z5 - Sprint</option>
                     </select>
                 </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Zona de Pausa ($Z_r$)</label>
-                    <select id="zone-r">
-                        <option value="Z1">Z1 - Parado/Caminar</option>
-                        <option value="Z2" selected>Z2 - Trote Activo</option>
+                    <label style="margin-top: 0; font-size: 12px; color: #34c759;">Minutos Pausa</label>
+                    <input type="number" id="slow-time" value="1.5" min="0.5" step="0.5" style="margin-top: 5px;">
+                </div>
+                <div style="flex-grow: 1;">
+                    <label style="margin-top: 0; font-size: 12px; color: #34c759;">Zona (Z<sub>r</sub>)</label>
+                    <select id="zone-r" style="margin-top: 5px;">
+                        <option value="Z1">Z1 - Caminar</option>
+                        <option value="Z2" selected>Z2 - Trote</option>
                         <option value="Z3">Z3 - Incompleta</option>
                         <option value="Z4">Z4 - Desacoplado</option>
                         <option value="Z5">Z5 - Sin pausa</option>
                     </select>
                 </div>
             </div>
-            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*Para rodajes continuos, selecciona la misma zona en ambas casillas (ej. Z2 a Z2).</p>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px; margin-bottom: 0;">*Para rodajes continuos, introduce la misma Zona en ambos selectores.</p>
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -396,7 +409,9 @@
             const startIdx = parseInt(document.getElementById('session-start').value);
             const endIdx = parseInt(document.getElementById('session-end').value);
             
-            // --- NUEVA LÓGICA DE MATRIZ ---
+            // Recoger tiempos y zonas
+            const fastTime = document.getElementById('fast-time').value;
+            const slowTime = document.getElementById('slow-time').value;
             const zw = document.getElementById('zone-w').value;
             const zr = document.getElementById('zone-r').value;
 
@@ -405,11 +420,19 @@
                 return;
             }
 
+            // Explicación de la carga combinando Zonas y Tiempo
             const sessionMatrixData = matrix[zw][zr];
-            let loadExplanation = `<strong>${sessionMatrixData.carga}:</strong> ${sessionMatrixData.desc}.`;
+            let seriesText = "";
+            if (zw !== zr) {
+                seriesText = ` (Bloque de ${fastTime} min Rápido / ${slowTime} min Pausa).`;
+            } else {
+                seriesText = ` (Rodaje continuo planificado).`;
+            }
+            
+            let loadExplanation = `<strong>${sessionMatrixData.carga}:</strong> ${sessionMatrixData.desc}${seriesText}`;
             
             if (zw < zr) {
-                loadExplanation += ` <span style="color: #ff9500; font-weight: bold;">[ALERTA DESACOPLAMIENTO]:</span> Pulsaciones anormalmente altas en descanso.`;
+                loadExplanation += `<br><span style="color: #ff9500; font-weight: bold;">[ALERTA DESACOPLAMIENTO]:</span> Pulsaciones anormalmente altas en descanso.`;
             }
 
             // --- HORA IDEAL SUGERIDA ---
