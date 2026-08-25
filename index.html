@@ -41,14 +41,11 @@
         .glossary-item { margin-top: 15px; }
         .glossary-item h4 { margin: 0 0 5px 0; color: #007aff; font-size: 16px; }
         .glossary-item p { font-size: 14px; color: #333; line-height: 1.6; margin-top: 0; }
-        table.tactical-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-        table.tactical-table th, table.tactical-table td { border: 1px solid #d1d1d6; padding: 8px; text-align: left; }
-        table.tactical-table th { background-color: #f0f0f5; color: #1c1c1e; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 style="margin-top: 0; color: #000; text-align: center; font-size: 22px; padding-top: 10px;">Calculadora WBGT</h2>
+        <h2 style="margin-top: 0; color: #000; text-align: center; font-size: 22px; padding-top: 10px;">Calculadora WBGT Táctica</h2>
         
         <div style="background: #f0f0f5; padding: 15px; border-radius: 12px; margin-bottom: 20px; margin-top: 20px;">
             <label style="margin-top:0;">1. Ubicación (Ciudad o Toca el Mapa)</label>
@@ -78,33 +75,38 @@
         <div id="risk-text" class="risk">--</div>
     </div>
 
-    <!-- PLANIFICADOR DE SESIONES -->
+    <!-- PLANIFICADOR DE SESIONES (NUEVA MATRIZ DE ZONAS) -->
     <div id="planner-card" class="card" style="display: none; margin-top: 20px;">
-        <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 18px;">Analizador de Sesión</h3>
+        <h3 style="margin-top: 0; text-align: center; color: #1c1c1e; font-size: 18px;">Matriz Analítica de Sesión</h3>
         
-        <label>Tipo de Entrenamiento</label>
-        <select id="workout-type" onchange="toggleIntervalInputs()">
-            <option value="intervals" selected>Series / Fartlek (Interválico)</option>
-            <option value="cont_z1">Rodaje Continuo Suave (Z1-Z2)</option>
-            <option value="cont_z3">Rodaje Continuo Tempo (Z3)</option>
-            <option value="cont_z4">Rodaje Continuo Umbral (Z4)</option>
-        </select>
-
-        <div id="interval-controls" style="display: block; background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
-            <div style="display: flex; gap: 10px;">
+        <div id="interval-controls" style="background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <label style="margin-top: 0;">Intensidad (Zonas de Frecuencia Cardíaca)</label>
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Minutos Rápidos</label>
-                    <input type="number" id="fast-time" value="3" min="0.5" step="0.5" style="margin-top: 5px;">
+                    <label style="margin-top: 0; font-size: 12px;">Zona de Trabajo ($Z_w$)</label>
+                    <select id="zone-w">
+                        <option value="Z1">Z1 - Suave</option>
+                        <option value="Z2">Z2 - Rodaje</option>
+                        <option value="Z3">Z3 - Tempo</option>
+                        <option value="Z4" selected>Z4 - Umbral</option>
+                        <option value="Z5">Z5 - Sprint / VO2</option>
+                    </select>
                 </div>
                 <div style="flex-grow: 1;">
-                    <label style="margin-top: 0; font-size: 12px;">Minutos Lentos (Pausa)</label>
-                    <input type="number" id="slow-time" value="1.5" min="0.5" step="0.5" style="margin-top: 5px;">
+                    <label style="margin-top: 0; font-size: 12px;">Zona de Pausa ($Z_r$)</label>
+                    <select id="zone-r">
+                        <option value="Z1">Z1 - Parado/Caminar</option>
+                        <option value="Z2" selected>Z2 - Trote Activo</option>
+                        <option value="Z3">Z3 - Incompleta</option>
+                        <option value="Z4">Z4 - Desacoplado</option>
+                        <option value="Z5">Z5 - Sin pausa</option>
+                    </select>
                 </div>
             </div>
-            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*Se calculará tu nivel de carga térmica (1, 2 o 3) en base al ratio de la serie.</p>
+            <p style="font-size: 11px; color: #666; margin-top: 10px; margin-bottom: 0;">*Para rodajes continuos, selecciona la misma zona en ambas casillas (ej. Z2 a Z2).</p>
         </div>
 
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
             <div style="flex-grow: 1;">
                 <label>Hora Inicio</label>
                 <select id="session-start"></select>
@@ -147,7 +149,7 @@
         <canvas id="wbgtChart"></canvas>
     </div>
 
-    <!-- GLOSARIO FIJO -->
+    <!-- GLOSARIO FIJO ACTUALIZADO -->
     <div class="card" style="margin-top: 20px;">
         <h3 style="margin-top: 0; color: #1c1c1e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Glosario de Protocolos Fisiológicos</h3>
         
@@ -163,7 +165,7 @@
                 <h4>2. Hiperhidratación (La Reserva Interna)</h4>
                 <p>La hiperhidratación es el proceso de expandir artificialmente tu volumen de agua corporal (tanto en el torrente sanguíneo como en los tejidos) por encima de los niveles normales antes de salir a correr, creando un "tanque de reserva" interno para que sudes ese líquido en lugar del de tus venas, todo sin tener que cargar peso externo en la cintura o espalda.<br><br>
                 <strong>Por qué no basta con beber agua sola:</strong> Si bebes agua en exceso antes de correr, tus riñones la detectarán rápidamente y la eliminarán a través de la orina (diuresis). Por eso, las fuentes detallan dos protocolos de hiperhidratación osmótica que usan "anclas" para retener esa agua en el cuerpo:<br><br>
-                <strong>Protocolo de Sodio:</strong> Ingerir de 17 a 20 gramos de citrato de sodio disueltos en agua (10-15 mL por cada kilo de tu peso) entre 60 y 90 minutos antes de correr. El sodio retiene el agua dentro de tus vasos sanguíneos, aportando un extra de 400 a 600 mL de plasma destinados exclusivamente a la sudoración.<br>
+                <strong>Protocolo de Sodio:</strong> Ingerir de 10 a 12 gramos de sal común (NaCl) disueltos en agua (10-15 mL por cada kilo de tu peso) entre 60 y 90 minutos antes de correr. El sodio retiene el agua dentro de tus vasos sanguíneos, aportando un extra de 400 a 600 mL de plasma destinados exclusivamente a la sudoración.<br>
                 <strong>Protocolo de Glicerol:</strong> Tomar 1,2 gramos de glicerol por kilo de peso con abundante agua (25-30 mL/kg) en las 2 horas previas. El glicerol penetra las células y retiene agua tanto dentro como fuera de ellas, lo que frena la subida de las pulsaciones (deriva cardíaca) durante la carrera.</p>
             </div>
 
@@ -173,35 +175,16 @@
                 <strong>La técnica del Granizado de Hielo (Ice Slurry):</strong> Es el método interno más eficaz. Consiste en ingerir un granizado de hielo picado (7,5 gramos por kilo de peso) unos 30 minutos antes de la salida. Al derretirse el hielo dentro de tu estómago, pasa de sólido a líquido y absorbe una inmensa cantidad de energía térmica (calor latente de fusión), logrando desplomar tu temperatura interna entre 0,3 °C y 0,6 °C antes de correr.<br>
                 <strong>Enfriamiento Externo Combinado:</strong> Se complementa aplicando frío directo en el exterior (mediante chalecos de hielo o compresas frías en el cuello y las ingles) durante 20 o 30 minutos para enfriar la sangre que pasa por las grandes arterias (carótidas y femorales), retrasando la necesidad de que tu cuerpo bombee sangre a la piel para enfriarse.</p>
             </div>
-            
+
             <div class="glossary-item">
-                <h4>4. Carga Térmica y Estrategia a Peso Cero</h4>
-                <p>Para dividir y clasificar el impacto térmico, la clave no es la distancia, sino la producción continua de calor vs. el descanso:<br><br>
-                <strong>Rodaje Z3 (Nivel 2) y Z4 (Nivel 3):</strong> La musculatura genera 15 a 20+ veces más calor metabólico ininterrumpidamente. Al no haber micro-pausas, la tasa de sudoración se dispara (>1.5 - 2 L/h en Z4) y las pulsaciones suben en un ascenso térmico rápido.<br>
-                <strong>Fartlek / Series:</strong> El nivel depende del Ratio (Trabajo:Descanso). Si la pausa es amplia (Trabajo ≤ Descanso, <strong>Nivel 1</strong>), la FC baja y el calor se disipa. Si la pausa es insuficiente (Pausa ≤ 1 min o Trabajo ≥ 3x Descanso, <strong>Nivel 3</strong>), el cuerpo funciona como en esfuerzo continuo al límite.</p>
-                
-                <table class="tactical-table">
-                    <tr>
-                        <th>Nivel de Carga</th>
-                        <th>Relación Rápido / Lento</th>
-                        <th>Condición de Tiempos</th>
-                    </tr>
-                    <tr>
-                        <td><strong>Nivel 1 (Moderado)</strong></td>
-                        <td>Ratio ≤ 1:1</td>
-                        <td>El tiempo Lento es <strong>igual o mayor</strong> que el rápido.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Nivel 2 (Alto)</strong></td>
-                        <td>Ratio entre 1,1:1 y 2:1</td>
-                        <td>El tiempo rápido es <strong>mayor</strong> que el lento, con pausa suficiente.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Nivel 3 (Extremo)</strong></td>
-                        <td>Ratio ≥ 3:1 o Pausa ≤ 1 min</td>
-                        <td>Tiempo rápido triplica al lento, o la pausa es <strong>incompleta</strong> (≤ 1 min).</td>
-                    </tr>
-                </table>
+                <h4>4. Análisis de la Matriz Térmica ($Z_w \rightarrow Z_r$)</h4>
+                <p>Fisiológicamente, las combinaciones de zonas se dividen en tres grandes grupos que determinan la inercia térmica:</p>
+                <ul style="font-size: 13px; color: #333; line-height: 1.5; padding-left: 20px;">
+                    <li><strong>Combinaciones Estándar de Intervalos ($Z_w > Z_r$):</strong> Representan la estructura habitual de fartlek o series. Bajar a Z1 o Z2 en el descanso reduce el gasto cardíaco por minuto y ayuda a disipar calor por la piel.</li>
+                    <li><strong>Combinaciones Continuas ($Z_w = Z_r$):</strong> Rodajes continuos. La temperatura central y la frecuencia cardíaca suben de forma ininterrumpida.</li>
+                    <li><strong>Combinaciones Anómalas ($Z_w < Z_r$):</strong> Significaría descansar a más pulsaciones de las que se corre. Si ocurren, en realidad el tramo de "recuperación" es el tramo de trabajo.</li>
+                </ul>
+                <p><strong>Diagnóstico del Desacoplamiento Térmico:</strong> Quedarse atascado en Z3 o Z4 durante una recuperación que debería ser Z1/Z2 indica que el plasma ha disminuido. El corazón late rápido solo para mantener la presión arterial. <strong>Si estás sin agua, debes detener la sesión inmediatamente.</strong></p>
             </div>
         </div>
     </div>
@@ -211,6 +194,45 @@
     </div>
 
     <script>
+        // MATRIZ MAESTRA DE 25 COMBINACIONES DE FRECUENCIA CARDÍACA
+        const matrix = {
+            "Z1": {
+                "Z1": { desc: "Rodaje / Caminata continua en Z1", carga: "Nivel 0 (Muy Baja)", limits: { "Verde": "90", "Amarilla": "75", "Naranja": "45", "Roja": "30" } },
+                "Z2": { desc: "Anómala (Se evalúa como Z2 → Z1)", carga: "Nivel 0 (Baja)", limits: { "Verde": "90", "Amarilla": "60", "Naranja": "40", "Roja": "25" } },
+                "Z3": { desc: "Anómala (Se evalúa como Z3 → Z1)", carga: "Nivel 1 (Moderada)", limits: { "Verde": "60", "Amarilla": "45", "Naranja": "30", "Roja": "15" } },
+                "Z4": { desc: "Anómala (Se evalúa como Z4 → Z1)", carga: "Nivel 1-2 (Moderada)", limits: { "Verde": "50", "Amarilla": "35", "Naranja": "20", "Roja": "10" } },
+                "Z5": { desc: "Anómala (Se evalúa como Z5 → Z1)", carga: "Nivel 2 (Alta)", limits: { "Verde": "40 - 45", "Amarilla": "30", "Naranja": "15 - 20", "Roja": "0" } }
+            },
+            "Z2": {
+                "Z1": { desc: "Rodaje suave Z2 con pausas a Z1", carga: "Nivel 0 (Baja)", limits: { "Verde": "90", "Amarilla": "60", "Naranja": "40", "Roja": "25" } },
+                "Z2": { desc: "Rodaje Z2 continuo", carga: "Nivel 0 (Baja)", limits: { "Verde": "75 - 90", "Amarilla": "60", "Naranja": "40", "Roja": "25" } },
+                "Z3": { desc: "Anómala (Se evalúa como Z3 → Z2)", carga: "Nivel 1-2 (Moderada)", limits: { "Verde": "55", "Amarilla": "40", "Naranja": "25", "Roja": "15" } },
+                "Z4": { desc: "Anómala (Se evalúa como Z4 → Z2)", carga: "Nivel 2 (Alta)", limits: { "Verde": "45", "Amarilla": "30", "Naranja": "15 - 20", "Roja": "0" } },
+                "Z5": { desc: "Anómala (Se evalúa como Z5 → Z2)", carga: "Nivel 2-3 (Alta)", limits: { "Verde": "35", "Amarilla": "25", "Naranja": "15", "Roja": "0" } }
+            },
+            "Z3": {
+                "Z1": { desc: "Tempo / Sub-umbral (Z3) + Pausa completa Z1", carga: "Nivel 1 (Moderada)", limits: { "Verde": "60", "Amarilla": "45", "Naranja": "30", "Roja": "15" } },
+                "Z2": { desc: "Tempo / Sub-umbral (Z3) + Trote activo Z2", carga: "Nivel 1-2 (Moderada)", limits: { "Verde": "55", "Amarilla": "40", "Naranja": "25", "Roja": "15" } },
+                "Z3": { desc: "Rodaje Z3 continuo (Sin descanso)", carga: "Nivel 2 (Alta)", limits: { "Verde": "45 - 60", "Amarilla": "35 - 45", "Naranja": "20 - 30", "Roja": "15" } },
+                "Z4": { desc: "Anómala (Se evalúa como Z4 → Z3)", carga: "Nivel 3 (Extrema)", limits: { "Verde": "35", "Amarilla": "20 - 25", "Naranja": "15", "Roja": "0" } },
+                "Z5": { desc: "Anómala (Se evalúa como Z5 → Z3)", carga: "Nivel 3 (Extrema)", limits: { "Verde": "30", "Amarilla": "20", "Naranja": "10 - 15", "Roja": "0" } }
+            },
+            "Z4": {
+                "Z1": { desc: "Umbral / VO2máx (Z4) + Pausa completa Z1", carga: "Nivel 1-2 (Moderada)", limits: { "Verde": "50", "Amarilla": "35", "Naranja": "20", "Roja": "10" } },
+                "Z2": { desc: "Umbral / VO2máx (Z4) + Trote Z2", carga: "Nivel 2 (Alta)", limits: { "Verde": "45", "Amarilla": "30", "Naranja": "15 - 20", "Roja": "0" } },
+                "Z3": { desc: "Umbral (Z4) + Pausa corta en Z3 (Incompleta)", carga: "Nivel 3 (Extrema)", limits: { "Verde": "35", "Amarilla": "20 - 25", "Naranja": "15", "Roja": "0" } },
+                "Z4": { desc: "Rodaje Z4 continuo (Umbral constante)", carga: "Nivel 3 (Extrema)", limits: { "Verde": "35 - 40", "Amarilla": "20", "Naranja": "15", "Roja": "0" } },
+                "Z5": { desc: "Anómala (Se evalúa como Z5 → Z4)", carga: "Nivel 4 (Crítica)", limits: { "Verde": "20", "Amarilla": "10 - 15", "Naranja": "0", "Roja": "0" } }
+            },
+            "Z5": {
+                "Z1": { desc: "Sprints / Anaeróbico (Z5) + Pausa completa Z1", carga: "Nivel 2 (Alta)", limits: { "Verde": "40 - 45", "Amarilla": "30", "Naranja": "15 - 20", "Roja": "0" } },
+                "Z2": { desc: "Series cortas Z5 + Trote Z2", carga: "Nivel 2-3 (Alta-Extrema)", limits: { "Verde": "35", "Amarilla": "25", "Naranja": "15", "Roja": "0" } },
+                "Z3": { desc: "Series Z5 + Pausa muy corta en Z3", carga: "Nivel 3 (Extrema)", limits: { "Verde": "30", "Amarilla": "20", "Naranja": "10 - 15", "Roja": "0" } },
+                "Z4": { desc: "Series Z5 con desacoplamiento severo a Z4", carga: "Nivel 4 (Crítica)", limits: { "Verde": "20", "Amarilla": "10 - 15", "Naranja": "0", "Roja": "0" } },
+                "Z5": { desc: "Esfuerzo máximo continuo (>92% FCmáx)", carga: "Nivel Crítico", limits: { "Verde": "10 - 15", "Amarilla": "0", "Naranja": "0", "Roja": "0" } }
+            }
+        };
+
         let map, marker;
         let selectedLat = null, selectedLon = null, selectedLocation = "", searchTimeout = null;
         let forecastDataArray = [];
@@ -238,16 +260,6 @@
                 fetchWeather();
             });
         };
-
-        function toggleIntervalInputs() {
-            const type = document.getElementById('workout-type').value;
-            const controls = document.getElementById('interval-controls');
-            if (type === 'intervals') {
-                controls.style.display = 'block';
-            } else {
-                controls.style.display = 'none';
-            }
-        }
 
         const flagLevels = { "Verde": 1, "Amarilla": 2, "Naranja": 3, "Roja": 4, "Negra": 5 };
 
@@ -380,52 +392,24 @@
             }
         }
 
-        const maxTimeMatrix = {
-            "Verde":   { "Z1": 90, "Z3": 60, "Z4": 45, "Z5": 35 },
-            "Amarilla":{ "Z1": 60, "Z3": 45, "Z4": 30, "Z5": 20 },
-            "Naranja": { "Z1": 40, "Z3": 30, "Z4": 15, "Z5": 10 },
-            "Roja":    { "Z1": 25, "Z3": 15, "Z4": 0,  "Z5": 0 },
-            "Negra":   { "Z1": 0,  "Z3": 0,  "Z4": 0,  "Z5": 0 }
-        };
-
         function analyzeSession() {
             const startIdx = parseInt(document.getElementById('session-start').value);
             const endIdx = parseInt(document.getElementById('session-end').value);
-            const workoutType = document.getElementById('workout-type').value;
+            
+            // --- NUEVA LÓGICA DE MATRIZ ---
+            const zw = document.getElementById('zone-w').value;
+            const zr = document.getElementById('zone-r').value;
 
             if (startIdx >= endIdx) {
                 alert("La hora de fin debe ser posterior a la de inicio.");
                 return;
             }
 
-            // --- LÓGICA DE CLASIFICACIÓN DE INTENSIDAD ---
-            let intensity = "Z1";
-            let loadExplanation = "";
-
-            if (workoutType === "intervals") {
-                let fast = parseFloat(document.getElementById('fast-time').value) || 0;
-                let slow = parseFloat(document.getElementById('slow-time').value) || 0;
-                let ratio = slow > 0 ? (fast / slow) : 999;
-
-                if (slow <= 1 || ratio >= 3) {
-                    intensity = "Z5"; 
-                    loadExplanation = `<strong>Nivel 3 (Carga Extrema):</strong> Fartlek / Series Nivel 3. La pausa es incompleta (≤ 1 min) o el trabajo rápido triplica al descanso. Funciona casi como un esfuerzo continuo al límite.`;
-                } else if (fast > slow) {
-                    intensity = "Z4";
-                    loadExplanation = `<strong>Nivel 2 (Carga Alta):</strong> Fartlek / Series Nivel 2. El tiempo rápido es mayor que el descanso, acumulando temperatura central "en escalera", pero la pausa es suficiente (> 1 min).`;
-                } else {
-                    intensity = "Z3";
-                    loadExplanation = `<strong>Nivel 1 (Carga Moderada):</strong> Fartlek / Series Nivel 1. El tiempo de recuperación es igual o mayor al trabajo (Ratio ≤ 1:1), permitiendo disipar gran parte del calor metabólico.`;
-                }
-            } else if (workoutType === "cont_z1") {
-                intensity = "Z1";
-                loadExplanation = `<strong>Nivel 0 / Base (Carga Moderada):</strong> Rodaje continuo a baja intensidad (Z1-Z2). Producción de calor metabólico moderada pero ininterrumpida.`;
-            } else if (workoutType === "cont_z3") {
-                intensity = "Z3";
-                loadExplanation = `<strong>Nivel 2 (Carga Térmica Alta):</strong> Rodaje continuo en Zona 3. La musculatura genera 15-20 veces más calor que en reposo sin pausas. Temperatura central al alza.`;
-            } else if (workoutType === "cont_z4") {
-                intensity = "Z4";
-                loadExplanation = `<strong>Nivel 3 (Carga Térmica Extrema):</strong> Rodaje continuo en Zona 4. Calor metabólico masivo (>20 veces el reposo). Tasa de sudoración disparada y ascenso térmico fulminante.`;
+            const sessionMatrixData = matrix[zw][zr];
+            let loadExplanation = `<strong>${sessionMatrixData.carga}:</strong> ${sessionMatrixData.desc}.`;
+            
+            if (zw < zr) {
+                loadExplanation += ` <span style="color: #ff9500; font-weight: bold;">[ALERTA DESACOPLAMIENTO]:</span> Pulsaciones anormalmente altas en descanso.`;
             }
 
             // --- HORA IDEAL SUGERIDA ---
@@ -503,12 +487,14 @@
                 transText = `<strong>Evolución Estable.</strong> La sesión discurre íntegramente bajo condiciones de Bandera ${highestFlag}.`;
             }
 
-            const maxTime = maxTimeMatrix[highestFlag][intensity];
+            let maxTime = sessionMatrixData.limits[highestFlag] || "0";
+            if (highestFlag === "Negra") maxTime = "0";
+
             let limitText = "";
-            if (maxTime === 0) {
+            if (maxTime === "0" || maxTime === 0) {
                 limitText = `<span style="color: #ff3b30; font-weight: bold;">PROHIBIDO SIN AGUA.</span> La intensidad térmica desborda por completo la capacidad de refrigeración cutánea. Es obligatorio portar bidones o detenerse a hidratar.`;
             } else {
-                limitText = `Incluso si has aplicado el protocolo de hidratación previo, la carga térmica de la Bandera ${highestFlag} fundirá esa reserva interna. Basado en tu nivel de esfuerzo, <strong>tu límite seguro a Peso Cero son ${maxTime} minutos</strong>. A partir de ahí, es obligatorio portar hidratación externa (bidones).`;
+                limitText = `Incluso si has aplicado el protocolo previo, la carga térmica de la Bandera ${highestFlag} fundirá esa reserva interna. Según tu inercia cardíaca, <strong>tu límite seguro a Peso Cero son ${maxTime} minutos</strong>. A partir de ahí, hidratación externa obligatoria.`;
             }
 
             document.getElementById('tactical-results').style.display = 'block';
